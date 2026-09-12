@@ -94,3 +94,40 @@ correction feels too aggressive on a given photo.
 - This matches *color and tonal* style (contrast, white balance, saturation,
   shadow/highlight color cast). It does not replicate composition, lighting
   setup, or lens choices -- those are shot on location, not in post.
+
+## Web app (`web_app/`)
+
+A small Flask front end so you can grade a photo from your phone without
+touching the CLI: upload an image, tap a style button, get the graded JPEG
+back as a download. It reuses the same `style_match` engine and reads
+whichever `profiles/<name>/profile.json` files exist -- add a new
+photographer via the CLI workflow above and it shows up as a button
+automatically once you add it to the `STYLES` dict in `web_app/app.py`.
+
+Everything runs in memory (no disk writes), so it's safe to deploy on a
+host with an ephemeral filesystem like Render's free tier.
+
+**Run it locally:**
+
+```bash
+pip install -r web_app/requirements.txt
+cd web_app && python3 app.py
+```
+
+Visit `http://127.0.0.1:5000` (or whatever `$PORT` you set).
+
+**Deploy to Render (free tier):**
+
+1. Push this repo to GitHub.
+2. On [dashboard.render.com](https://dashboard.render.com): **New +** →
+   **Web Service** → connect the repo. Render auto-detects `render.yaml`
+   at the project root; if it doesn't, set manually:
+   - Build Command: `pip install -r web_app/requirements.txt`
+   - Start Command: `gunicorn --chdir web_app --bind 0.0.0.0:$PORT app:app`
+   - Instance Type: Free
+3. Deploy. Open the resulting `*.onrender.com` URL from your phone (Add to
+   Home Screen for an app-like icon).
+
+Free-tier services spin down after 15 minutes idle and take ~30-50s to
+wake on the next request -- fine for occasional use, just not instant on a
+cold start.
