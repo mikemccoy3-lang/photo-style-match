@@ -9,7 +9,7 @@ import os
 import sys
 
 from flask import Flask, abort, render_template, request, send_file
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
@@ -26,6 +26,12 @@ STYLES = {
 }
 
 GRADE_STRENGTH = 0.85
+
+# Render's free instance has 512MB RAM total, and scikit-image's LAB color
+# conversion allocates several full-resolution float64 arrays at once --
+# a modest few-megapixel photo can exhaust that on its own. Downscale before
+# processing; a web download doesn't need full camera resolution anyway.
+MAX_DIMENSION = 1200
 
 app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB, plenty for a phone photo
@@ -60,6 +66,10 @@ def grade():
         image.load()
     except UnidentifiedImageError:
         abort(400, "That doesn't look like a valid image file.")
+
+    image = ImageOps.exif_transpose(image)
+    if max(image.size) > MAX_DIMENSION:
+        image.thumbnail((MAX_DIMENSION, MAX_DIMENSION), Image.Resampling.LANCZOS)
 
     profile = load_profile(style_key)
     graded = apply_profile(image, profile, strength=GRADE_STRENGTH)
