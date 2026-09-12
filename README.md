@@ -131,3 +131,11 @@ Visit `http://127.0.0.1:5000` (or whatever `$PORT` you set).
 Free-tier services spin down after 15 minutes idle and take ~30-50s to
 wake on the next request -- fine for occasional use, just not instant on a
 cold start.
+
+**Memory note:** Render's free instance has 512MB RAM total. scikit-image's
+LAB color conversion allocates several full-resolution float64 arrays at
+once, which on top of the Flask/gunicorn/numpy/scikit-image baseline
+footprint can exceed that even for a modest few-megapixel photo. The web
+app downscales every upload to 1200px on the long edge before grading
+(`MAX_DIMENSION` in `web_app/app.py`) to stay well under the limit -- raise
+it only if you move to a paid instance with more RAM.
