@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Photo Style Match</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: 2.5rem 1.25rem;
+      text-align: center;
+    }
+    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+    p.sub { opacity: 0.7; margin-top: 0; margin-bottom: 2rem; }
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      margin: 1.5rem 0;
+      padding: 0.9rem;
+      border: 1px dashed #888;
+      border-radius: 8px;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+    .buttons { display: flex; flex-direction: column; gap: 0.75rem; }
+    button {
+      font-size: 1.05rem;
+      padding: 0.9rem;
+      border: none;
+      border-radius: 10px;
+      background: #1c1c1e;
+      color: white;
+      cursor: pointer;
+    }
+    button:active { opacity: 0.8; }
+    button:disabled { opacity: 0.5; }
+    #status { margin-top: 1.25rem; opacity: 0.75; min-height: 1.2em; font-size: 0.95rem; }
+    #preview {
+      margin-top: 1.5rem;
+      max-width: 100%;
+      border-radius: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Photo Style Match</h1>
+  <p class="sub">Upload a photo, pick a look, get the graded version.</p>
+
+  <form id="grade-form">
+    <input type="file" name="photo" id="photo" accept="image/*" required>
+    <div class="buttons">
+      {% for key, label in styles.items() %}
+      <button type="submit" name="style" value="{{ key }}">{{ label }}</button>
+      {% endfor %}
+    </div>
+  </form>
+  <div id="status"></div>
+  <img id="preview" alt="Graded result">
+
+  <script>
+    const form = document.getElementById('grade-form');
+    const status = document.getElementById('status');
+    const preview = document.getElementById('preview');
+    const buttons = form.querySelectorAll('button');
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const submitter = event.submitter;
+      const photo = document.getElementById('photo').files[0];
+      if (!photo) return;
+
+      buttons.forEach((b) => (b.disabled = true));
+      status.textContent = 'Grading…';
+      preview.style.display = 'none';
+
+      const data = new FormData();
+      data.append('photo', photo);
+      data.append('style', submitter.value);
+
+      try {
+        const res = await fetch('/grade', { method: 'POST', body: data });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || 'Something went wrong.');
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+
+        preview.src = url;
+        preview.style.display = 'block';
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${submitter.value}_graded.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+
+        status.textContent = 'Done — check your downloads (or long-press the preview to save).';
+      } catch (err) {
+        status.textContent = 'Error: ' + err.message;
+      } finally {
+        buttons.forEach((b) => (b.disabled = false));
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: photo-style-match
+    env: python
+    plan: free
+    buildCommand: pip install -r web_app/requirements.txt
+    startCommand: gunicorn --chdir web_app --bind 0.0.0.0:$PORT app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9

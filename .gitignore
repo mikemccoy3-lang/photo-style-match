@@ -1,0 +1,15 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+# Local CLI working folders -- reference photos and per-run photos don't
+# need to ship with the app; only profile.json does.
+profiles/*/references/*
+profiles/*/inbox/*
+profiles/*/graded/*
+!profiles/*/references/.gitkeep
+!profiles/*/inbox/.gitkeep
+!profiles/*/graded/.gitkeep
+
+output/
+*.cube
