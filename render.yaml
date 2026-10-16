@@ -4,7 +4,7 @@ services:
     env: python
     plan: free
     buildCommand: pip install -r web_app/requirements.txt
-    startCommand: gunicorn --chdir web_app --bind 0.0.0.0:$PORT app:app
+    startCommand: gunicorn --chdir web_app --bind 0.0.0.0:$PORT --timeout 120 app:app
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9

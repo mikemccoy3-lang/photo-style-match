@@ -1,22 +1,31 @@
-"""Flask front end for style_match: pick a photo, browse live low-res
-previews of each photographer's look, then develop the full-size version.
+"""Flask front end for style_match: pick photos, browse live low-res previews
+of each photographer's look (or your own), then develop at full size.
 
 Runs entirely in memory -- nothing is written to disk, so it's safe on
 Render's ephemeral filesystem.
+
+Grading goes through `style_match.transform`: statistics are measured on a
+small copy of the photo, every setting is baked into a 3D color lookup
+table, and Pillow applies that table to the full-size photo. That keeps a
+12-megapixel photo comfortably inside the free instance's 512MB of RAM.
 """
+from __future__ import annotations
+
 import io
 import json
 import math
 import os
 import sys
+from dataclasses import asdict
 
-from flask import Flask, abort, render_template, request, send_file
+from flask import Flask, abort, jsonify, render_template, request, send_file
 from PIL import Image, ImageOps, UnidentifiedImageError
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
-from style_match.apply import apply_profile  # noqa: E402
-from style_match.profile import LookProfile  # noqa: E402
+from style_match import transform  # noqa: E402
+from style_match.profile import LookProfile, build_profile_from_images  # noqa: E402
+from style_match.screen import screen_references  # noqa: E402
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROFILES_DIR = os.path.join(BASE_DIR, "..", "profiles")
@@ -32,21 +41,28 @@ STYLES = {
     "easton-chang": "Easton Chang",
     "jamey-price": "Jamey Price",
 }
+CUSTOM = "custom"  # the user's own look, sent from their browser as a profile
 
-GRADE_STRENGTH = 0.85
+DEFAULT_STRENGTH = 0.85
+# How much of a photographer's color balance to borrow. Full color matching
+# rotates paint hues by ~15-20 degrees and mutes them (a blue car turns
+# purple); half keeps paint within ~5-9 degrees while still picking up the look.
+DEFAULT_COLOR = 0.5
 
-# Render's free instance has 512MB RAM total, and scikit-image's LAB color
-# conversion allocates several full-resolution float64 arrays at once --
-# a modest few-megapixel photo can exhaust that on its own. Downscale before
-# processing; a web download doesn't need full camera resolution anyway.
-MAX_DIMENSION = 1200
+# Largest photo we will develop. 12.6 megapixels adds only ~100MB of memory
+# through the lookup-table path, so it fits the free instance.
+MAX_DIMENSION = 4096
 
 # Low-res renders for the live look browser. Small on purpose: eight of these
 # run back to back on a very small CPU, and they only need to be recognizable.
 PREVIEW_DIMENSION = 512
 
+MAX_PROFILE_JSON_BYTES = 20_000
+MAX_REFERENCE_PHOTOS = 15
+MIN_REFERENCE_PHOTOS = 3
+
 app = Flask(__name__)
-app.config["MAX_CONTENT_LENGTH"] = 20 * 1024 * 1024  # 20 MB, plenty for a phone photo
+app.config["MAX_CONTENT_LENGTH"] = 24 * 1024 * 1024  # a 12MP JPEG is a few MB
 
 _profile_cache: dict[str, LookProfile] = {}
 
@@ -108,13 +124,13 @@ STYLE_CARDS = [
     for slug, name in STYLES.items()
 ]
 
+# Build the lookup lattice once at startup instead of on the first request.
+transform._grid(transform.LUT_SIZE)
 
-def read_photo(max_dimension: int) -> Image.Image:
-    """Validate and decode the uploaded photo, fix orientation, cap its size."""
-    upload = request.files.get("photo")
-    if upload is None or upload.filename == "":
-        abort(400, "No photo uploaded.")
 
+# ---------- request helpers ----------
+
+def decode_photo(upload, max_dimension: int) -> Image.Image:
     try:
         image = Image.open(upload.stream)
         image.load()
@@ -127,11 +143,41 @@ def read_photo(max_dimension: int) -> Image.Image:
     return image
 
 
-def read_style() -> str:
-    style_key = request.form.get("style", "")
+def read_photo(max_dimension: int) -> Image.Image:
+    upload = request.files.get("photo")
+    if upload is None or upload.filename == "":
+        abort(400, "No photo uploaded.")
+    return decode_photo(upload, max_dimension)
+
+
+def read_unit_float(field: str, default: float) -> float:
+    raw = request.form.get(field)
+    if raw is None or raw == "":
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        abort(400, f"Invalid {field}.")
+    if not math.isfinite(value) or not 0.0 <= value <= 1.0:
+        abort(400, f"{field} must be between 0 and 1.")
+    return value
+
+
+def resolve_look(style_field: str, optional: bool = False) -> LookProfile | None:
+    style_key = request.form.get(style_field, "")
+    if optional and style_key == "":
+        return None
+    if style_key == CUSTOM:
+        raw = request.form.get("profile", "")
+        if not raw or len(raw) > MAX_PROFILE_JSON_BYTES:
+            abort(400, "Missing or oversized custom profile.")
+        try:
+            return LookProfile.from_untrusted(json.loads(raw))
+        except (ValueError, TypeError):
+            abort(400, "Invalid custom profile.")
     if style_key not in STYLES:
         abort(400, "Unknown style.")
-    return style_key
+    return load_profile(style_key)
 
 
 def jpeg_response(image: Image.Image, quality: int, **send_kwargs):
@@ -143,9 +189,23 @@ def jpeg_response(image: Image.Image, quality: int, **send_kwargs):
     return response
 
 
+# ---------- routes ----------
+
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html", styles=STYLE_CARDS, default_strength=int(GRADE_STRENGTH * 100))
+    return render_template(
+        "index.html",
+        styles=STYLE_CARDS,
+        default_strength=int(DEFAULT_STRENGTH * 100),
+        default_color=int(DEFAULT_COLOR * 100),
+        max_reference=MAX_REFERENCE_PHOTOS,
+        min_reference=MIN_REFERENCE_PHOTOS,
+    )
+
+
+@app.route("/healthz", methods=["GET"])
+def healthz():
+    return "ok", 200, {"Cache-Control": "no-store"}
 
 
 @app.route("/manifest.webmanifest", methods=["GET"])
@@ -170,33 +230,73 @@ def manifest():
 
 @app.route("/preview", methods=["POST"])
 def preview():
-    """Small, full-strength render. The page blends it with the original
-    client-side, so the intensity slider needs no further requests."""
-    style_key = read_style()
+    """Small, full-strength renders of one look, stacked in one JPEG.
+
+    Top half: tone only (the photo's own colors). Bottom half: tone plus the
+    photographer's color. The page blends these with the original for its
+    intensity and color sliders, so no slider move needs another request.
+    """
+    profile = resolve_look("style")
     image = read_photo(PREVIEW_DIMENSION)
-    graded = apply_profile(image, load_profile(style_key), strength=1.0)
-    return jpeg_response(graded, quality=85)
+    tone, full = transform.preview_pair(image, profile)
+    stacked = Image.new("RGB", (image.width, image.height * 2))
+    stacked.paste(tone, (0, 0))
+    stacked.paste(full, (0, image.height))
+    return jpeg_response(stacked, quality=88)
 
 
 @app.route("/grade", methods=["POST"])
 def grade():
-    style_key = read_style()
+    primary = resolve_look("style")
+    secondary = resolve_look("style2", optional=True)
+    strength = read_unit_float("strength", DEFAULT_STRENGTH)
+    color_amount = read_unit_float("color", DEFAULT_COLOR)
+    mix = read_unit_float("mix", 0.5)
 
-    try:
-        strength = float(request.form.get("strength", GRADE_STRENGTH))
-    except ValueError:
-        abort(400, "Invalid strength.")
-    if not 0.0 <= strength <= 1.0:
-        abort(400, "Strength must be between 0 and 1.")
+    if secondary is None:
+        looks = [(primary, 1.0)]
+    else:
+        looks = [(primary, 1.0 - mix), (secondary, mix)]
 
     image = read_photo(MAX_DIMENSION)
-    graded = apply_profile(image, load_profile(style_key), strength=strength)
+    graded = transform.develop(image, looks, strength, color_amount)
     return jpeg_response(
         graded,
         quality=92,
         as_attachment=True,
-        download_name=f"{style_key}_graded.jpg",
+        download_name="style-match.jpg",
     )
+
+
+@app.route("/build-look", methods=["POST"])
+def build_look():
+    """Build a personal look from the user's own best photos.
+
+    Nothing is stored server-side: the profile (a few KB of numbers) goes back
+    to the browser, which keeps it and sends it along with later requests.
+    """
+    uploads = [f for f in request.files.getlist("photos") if f.filename]
+    if len(uploads) < MIN_REFERENCE_PHOTOS:
+        abort(400, f"Add at least {MIN_REFERENCE_PHOTOS} photos.")
+    if len(uploads) > MAX_REFERENCE_PHOTOS:
+        abort(400, f"Use at most {MAX_REFERENCE_PHOTOS} photos.")
+
+    images = [decode_photo(f, PREVIEW_DIMENSION) for f in uploads]
+    usable, notes = screen_references(images)
+    if len(usable) < MIN_REFERENCE_PHOTOS:
+        return (
+            jsonify(
+                error=f"Only {len(usable)} of your {len(images)} photos could be used "
+                f"(need {MIN_REFERENCE_PHOTOS}). Add more color photos that aren't duplicates.",
+                notes=notes,
+            ),
+            422,
+        )
+
+    profile = build_profile_from_images(usable)
+    payload = asdict(profile)
+    payload.pop("source_images", None)
+    return jsonify(profile=payload, tags=describe_look(profile), used=len(usable), total=len(images), notes=notes)
 
 
 if __name__ == "__main__":

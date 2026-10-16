@@ -42,8 +42,7 @@
         var(--bg);
       -webkit-tap-highlight-color: transparent;
     }
-    /* film grain */
-    body::before {
+    body::before { /* film grain */
       content: "";
       position: fixed;
       inset: 0;
@@ -62,12 +61,7 @@
     /* ---------- brand ---------- */
     .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
     .logo { width: 46px; height: 46px; flex: none; border-radius: 12px; animation: spin-in 0.9s cubic-bezier(.2,.8,.2,1); }
-    h1 {
-      margin: 0;
-      font: 800 31px/1 var(--display);
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
+    h1 { margin: 0; font: 800 31px/1 var(--display); letter-spacing: 0.05em; text-transform: uppercase; }
     h1 span { color: var(--amber); }
     .tagline { margin: 4px 0 0; color: var(--muted); font-size: 14.5px; }
 
@@ -89,7 +83,7 @@
     .drop svg { width: 68px; height: 68px; margin-bottom: 6px; }
     .drop .big { font: 800 27px/1.05 var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
     .drop .small { color: var(--muted); font-size: 14.5px; }
-    .drop-msg { min-height: 1.4em; margin: 10px 0 0; text-align: center; color: var(--text); font-size: 15px; }
+    .drop-msg { min-height: 1.4em; margin: 10px 0 0; text-align: center; font-size: 15px; }
     .looks-title { margin: 26px 0 10px; text-align: center; color: var(--muted); font: 700 13px var(--display); letter-spacing: 0.14em; text-transform: uppercase; }
     .looks-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
     .looks-list span {
@@ -99,6 +93,7 @@
       background: rgba(255, 255, 255, 0.04);
       font-size: 13.5px;
     }
+    .home-actions { display: grid; margin-top: 22px; }
 
     /* ---------- viewfinder ---------- */
     .vf {
@@ -115,6 +110,13 @@
       -webkit-touch-callout: none;
       touch-action: pan-y;
     }
+    #studio .vf {
+      position: sticky;
+      top: calc(env(safe-area-inset-top, 0px) + 8px);
+      z-index: 20;
+      /* first shadow masks content scrolling past above the pinned photo */
+      box-shadow: 0 -28px 0 0 var(--bg), 0 22px 60px rgba(0, 0, 0, 0.55);
+    }
     .vf canvas, .vf img.final {
       display: block;
       width: 100%;
@@ -122,6 +124,7 @@
       max-height: 58vh;
       object-fit: contain;
     }
+    #studio .vf canvas { max-height: 42vh; }
     .br { position: absolute; width: 24px; height: 24px; border: 3px solid var(--amber); pointer-events: none; }
     .br.tl { left: 10px; top: 10px; border-right: 0; border-bottom: 0; border-top-left-radius: 8px; }
     .br.tr { right: 10px; top: 10px; border-left: 0; border-bottom: 0; border-top-right-radius: 8px; }
@@ -153,9 +156,9 @@
       display: none;
       place-content: center;
       justify-items: center;
-      gap: 14px;
+      gap: 12px;
       text-align: center;
-      background: rgba(0, 0, 0, 0.62);
+      background: rgba(0, 0, 0, 0.66);
       -webkit-backdrop-filter: blur(4px);
       backdrop-filter: blur(4px);
     }
@@ -170,62 +173,29 @@
       animation: rot 0.9s linear infinite;
     }
     .busy-text { font: 800 19px var(--display); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 16px; }
+    .bar { width: min(220px, 70%); height: 8px; border-radius: 99px; background: #3b4048; overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 0; background: var(--amber); transition: width 0.3s; }
+    .busy-cancel { margin-top: 2px; padding: 8px 18px; font-size: 14px; }
 
-    /* ---------- controls ---------- */
-    .row-title { display: flex; align-items: baseline; justify-content: space-between; margin: 20px 2px 8px; }
-    .row-title b { font: 800 15px var(--display); letter-spacing: 0.12em; text-transform: uppercase; }
-    .row-title output { font: 800 16px var(--display); letter-spacing: 0.04em; color: var(--amber); }
-    input[type="range"] {
-      --p: 85%;
-      width: 100%;
-      height: 34px;
-      margin: 0;
-      background: transparent;
-      -webkit-appearance: none;
-      appearance: none;
-    }
-    input[type="range"]::-webkit-slider-runnable-track {
-      height: 8px;
-      border-radius: 99px;
-      background: linear-gradient(to right, var(--amber) var(--p), #3b4048 var(--p));
-    }
-    input[type="range"]::-moz-range-track { height: 8px; border-radius: 99px; background: #3b4048; }
-    input[type="range"]::-moz-range-progress { height: 8px; border-radius: 99px; background: var(--amber); }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 28px;
-      height: 28px;
-      margin-top: -10px;
-      border-radius: 50%;
-      border: 4px solid var(--amber);
-      background: #fff;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-    }
-    input[type="range"]::-moz-range-thumb {
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 4px solid var(--amber);
-      background: #fff;
-    }
-    input[type="range"]:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 8px; }
+    /* ---------- set of photos ---------- */
+    .set { display: flex; gap: 8px; margin: 12px -16px 0; padding: 4px 16px 6px; overflow-x: auto; scrollbar-width: none; }
+    .set::-webkit-scrollbar { display: none; }
+    .set-label { margin: 14px 2px 0; font: 800 13px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    .setthumb { flex: none; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 10px; overflow: hidden; background: var(--panel2); outline: 3px solid transparent; outline-offset: 1px; cursor: pointer; }
+    .setthumb.on { outline-color: var(--amber); }
+    .setthumb canvas { display: block; width: 100%; height: 100%; }
 
+    /* ---------- looks ---------- */
     .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 34px; margin: 14px 2px 0; }
-    .tags .t {
-      padding: 5px 11px;
-      border: 1.5px solid var(--text);
-      border-radius: 999px;
-      font: 800 12.5px var(--display);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
+    .tags .t { padding: 5px 11px; border: 1.5px solid var(--text); border-radius: 999px; font: 800 12.5px var(--display); letter-spacing: 0.1em; text-transform: uppercase; }
     .tags .cap { color: var(--muted); font-size: 13px; }
+    .linkbtn { padding: 4px 2px; border: 0; background: none; color: var(--amber); font: 800 13px var(--display); letter-spacing: 0.1em; text-transform: uppercase; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 
     .strip {
       position: relative;
       display: flex;
       gap: 12px;
-      margin: 10px -16px 0;
+      margin: 8px -16px 0;
       padding: 10px 16px 14px;
       overflow-x: auto;
       scroll-snap-type: x proximity;
@@ -260,11 +230,12 @@
       outline-offset: 2px;
       transition: transform 0.16s, outline-color 0.16s;
     }
-    .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .thumb canvas { display: block; width: 100%; height: 100%; }
     .chip.on .thumb { outline-color: var(--amber); transform: translateY(-4px) scale(1.04); }
+    .chip.on-b .thumb { outline: 3px dashed #fff; transform: translateY(-4px) scale(1.04); }
     .chip:active .thumb { transform: scale(0.96); }
     .chip:focus-visible .thumb { outline-color: #fff; }
-    .check {
+    .mark {
       position: absolute;
       right: 5px;
       top: 5px;
@@ -273,12 +244,13 @@
       width: 22px;
       height: 22px;
       border-radius: 50%;
-      background: var(--amber);
-      color: var(--ink);
       font: 900 14px/1 var(--body);
     }
-    .chip.on .check { display: grid; }
-    .thumb.loading img { filter: grayscale(0.5) brightness(0.55); }
+    .mark.a { background: var(--amber); color: var(--ink); }
+    .mark.b { background: #fff; color: #000; }
+    .chip.on .mark.a { display: grid; }
+    .chip.on-b .mark.b { display: grid; }
+    .thumb.loading canvas { filter: grayscale(0.5) brightness(0.55); }
     .thumb.loading::after {
       content: "";
       position: absolute;
@@ -287,32 +259,43 @@
       background-size: 220% 100%;
       animation: shimmer 1.15s linear infinite;
     }
-    .thumb .errmsg {
-      position: absolute;
-      inset: 0;
-      display: none;
-      place-content: center;
-      gap: 2px;
-      background: rgba(0, 0, 0, 0.78);
-      font: 800 12px var(--display);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-    }
+    .thumb .errmsg { position: absolute; inset: 0; display: none; place-content: center; gap: 2px; background: rgba(0, 0, 0, 0.78); font: 800 12px var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
     .thumb.err .errmsg { display: grid; }
-    .cname {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      width: 100%;
-      min-height: 2.4em;
-      margin-top: 9px;
-      font: 800 12.5px/1.15 var(--display);
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
+    .thumb.plus { display: grid; place-items: center; border: 2px dashed #6a707a; background: transparent; font: 800 40px/1 var(--display); color: var(--amber); }
+    .cname { display: flex; justify-content: center; align-items: flex-start; width: 100%; min-height: 2.4em; margin-top: 9px; font: 800 12.5px/1.15 var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
 
-    .actions { display: grid; gap: 10px; margin-top: 4px; }
+    /* ---------- sliders ---------- */
+    .row-title { display: flex; align-items: baseline; justify-content: space-between; margin: 14px 2px 2px; }
+    .row-title b { font: 800 15px var(--display); letter-spacing: 0.12em; text-transform: uppercase; }
+    .row-title output { font: 800 16px var(--display); letter-spacing: 0.04em; color: var(--amber); }
+    .ends { display: flex; justify-content: space-between; margin: -4px 2px 0; color: var(--muted); font-size: 12.5px; }
+    input[type="range"] { --p: 50%; width: 100%; height: 34px; margin: 0; background: transparent; -webkit-appearance: none; appearance: none; }
+    input[type="range"]::-webkit-slider-runnable-track { height: 8px; border-radius: 99px; background: linear-gradient(to right, var(--amber) var(--p), #3b4048 var(--p)); }
+    input[type="range"]::-moz-range-track { height: 8px; border-radius: 99px; background: #3b4048; }
+    input[type="range"]::-moz-range-progress { height: 8px; border-radius: 99px; background: var(--amber); }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 28px; height: 28px; margin-top: -10px; border-radius: 50%; border: 4px solid var(--amber); background: #fff; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5); }
+    input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; border: 4px solid var(--amber); background: #fff; }
+    input[type="range"]:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 8px; }
+
+    /* ---------- mix ---------- */
+    .mix-toggle { display: flex; align-items: center; justify-content: space-between; width: 100%; margin-top: 16px; padding: 12px 14px; border: 2px solid #4b515a; border-radius: 14px; background: transparent; color: #fff; font: 800 15px var(--display); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+    .mix-toggle .sw { position: relative; width: 46px; height: 26px; border-radius: 99px; background: #3b4048; transition: background 0.15s; }
+    .mix-toggle .sw::after { content: ""; position: absolute; left: 3px; top: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: transform 0.15s; }
+    .mix-toggle[aria-pressed="true"] { border-color: var(--amber); }
+    .mix-toggle[aria-pressed="true"] .sw { background: var(--amber); }
+    .mix-toggle[aria-pressed="true"] .sw::after { transform: translateX(20px); background: var(--ink); }
+    .mixbox { margin-top: 10px; padding: 12px 12px 4px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255, 255, 255, 0.03); }
+    .mixpick { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .mixpick button { padding: 10px 8px; border: 2px solid #4b515a; border-radius: 12px; background: transparent; color: #fff; font: 800 13px/1.15 var(--display); letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; }
+    .mixpick button small { display: block; margin-bottom: 2px; color: var(--muted); font-size: 11px; letter-spacing: 0.14em; }
+    .mixpick button[aria-pressed="true"] { border-color: var(--amber); background: rgba(255, 196, 94, 0.12); }
+    .mixhelp { margin: 8px 2px 0; color: var(--muted); font-size: 13px; }
+
+    /* ---------- buttons ---------- */
+    .actions { display: grid; gap: 10px; margin-top: 14px; }
     .cta {
+      display: grid;
+      place-items: center;
       width: 100%;
       padding: 17px 18px;
       border: 0;
@@ -329,24 +312,23 @@
     .cta:active { transform: scale(0.98); }
     .cta:disabled { background: #2b2f35; color: #b5bac2; box-shadow: none; cursor: default; }
     .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .ghost {
-      display: grid;
-      place-items: center;
-      padding: 13px 14px;
-      border: 2px solid #4b515a;
-      border-radius: 14px;
-      background: transparent;
-      color: #fff;
-      font: 800 15px var(--display);
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      cursor: pointer;
-    }
+    .ghost { display: grid; place-items: center; padding: 13px 14px; border: 2px solid #4b515a; border-radius: 14px; background: transparent; color: #fff; font: 800 15px var(--display); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; }
     .ghost:active { background: rgba(255, 255, 255, 0.08); }
     .status { min-height: 1.5em; margin: 12px 0 0; text-align: center; color: var(--muted); font-size: 14.5px; }
-    .foot { margin-top: 26px; text-align: center; color: var(--muted); font-size: 13px; }
+    .foot { margin-top: 22px; text-align: center; color: var(--muted); font-size: 13px; }
     .result-title { margin: 18px 0 4px; text-align: center; font: 800 24px var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
     .result-sub { margin: 0 0 16px; text-align: center; color: var(--muted); font-size: 14.5px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid figure { position: relative; margin: 0; overflow: hidden; border-radius: 14px; border: 1px solid var(--line); background: #000; }
+    .grid img { display: block; width: 100%; aspect-ratio: 1; object-fit: cover; }
+    .grid button { position: absolute; right: 8px; bottom: 8px; padding: 7px 12px; border: 0; border-radius: 999px; background: rgba(0, 0, 0, 0.72); color: #fff; font: 800 12.5px var(--display); letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer; }
+
+    /* ---------- builder sheet ---------- */
+    .sheet { position: fixed; inset: 0; z-index: 100; display: grid; align-items: end; background: rgba(0, 0, 0, 0.7); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); }
+    .sheet-panel { max-width: 560px; width: 100%; margin: 0 auto; max-height: 90vh; overflow-y: auto; padding: 22px 18px calc(env(safe-area-inset-bottom, 0px) + 22px); border: 1px solid var(--line); border-bottom: 0; border-radius: 22px 22px 0 0; background: #121417; animation: rise 0.22s ease-out; }
+    .sheet h2 { margin: 0 0 6px; font: 800 26px var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
+    .sheet p { margin: 0 0 14px; color: var(--muted); font-size: 15px; }
+    .summary { display: grid; gap: 6px; margin: 12px 0; padding: 12px; border: 1px solid var(--line); border-radius: 12px; font-size: 14.5px; }
 
     button:focus-visible, label:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
     .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -356,6 +338,7 @@
     @keyframes rot { to { transform: rotate(360deg); } }
     @keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
     @keyframes spin-in { from { transform: rotate(-200deg) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes rise { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
     }
@@ -377,9 +360,9 @@
     </div>
   </header>
 
-  <input class="sr" type="file" id="file" accept="image/*">
+  <input class="sr" type="file" id="file" accept="image/*" multiple>
 
-  <!-- 1. choose a photo -->
+  <!-- 1. choose photos -->
   <section id="home">
     <label class="drop" id="drop" for="file">
       <svg viewBox="0 0 64 64" fill="none" stroke="#ffc45e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -387,13 +370,15 @@
         <circle cx="32" cy="35" r="11"/><circle cx="32" cy="35" r="4.5"/>
       </svg>
       <span class="big">Choose a photo</span>
-      <span class="small">or drop one here</span>
+      <span class="small">or a whole set, or drop them here</span>
     </label>
     <p class="drop-msg" id="dropMsg" aria-live="polite"></p>
     <p class="looks-title">{{ styles|length }} looks inside</p>
     <div class="looks-list">
       {% for s in styles %}<span>{{ s.name }}</span>{% endfor %}
+      <span id="homeMyLook" hidden>My Look</span>
     </div>
+    <div class="home-actions"><button class="ghost" type="button" id="openBuilderHome">Build My Look</button></div>
   </section>
 
   <!-- 2. browse looks -->
@@ -404,73 +389,136 @@
       <div class="pill-ov badge" id="badge">Original</div>
       <div class="pill-ov hint">Hold to compare</div>
       <div class="flash" id="flash"></div>
-      <div class="busy-layer"><div class="ring"></div><div class="busy-text" id="busyText">Developing…</div></div>
+      <div class="busy-layer">
+        <div class="ring"></div>
+        <div class="busy-text" id="busyText">Developing…</div>
+        <div class="bar" id="bar" hidden><i id="barFill"></i></div>
+        <button class="ghost busy-cancel" id="cancelDevelop" type="button" hidden>Cancel</button>
+      </div>
     </div>
 
-    <div class="row-title"><b>Intensity</b><output id="strengthOut" for="strength">{{ default_strength }}%</output></div>
-    <input type="range" id="strength" min="0" max="100" value="{{ default_strength }}" aria-label="Intensity">
+    <p class="set-label" id="setLabel" hidden>Your set</p>
+    <div class="set" id="set" hidden aria-label="Photos in your set. Tap one to preview looks on it."></div>
 
     <div class="tags" id="tags" aria-live="polite"></div>
+    <div class="strip" id="strip" role="listbox" aria-label="Looks"></div>
 
-    <div class="strip" id="strip" role="listbox" aria-label="Photographer looks"></div>
+    <div class="row-title"><b>Intensity</b><output id="strengthOut" for="strength"></output></div>
+    <input type="range" id="strength" min="0" max="100" aria-label="Intensity">
+
+    <div class="row-title"><b>Color match</b><output id="colorOut" for="color"></output></div>
+    <input type="range" id="color" min="0" max="100" aria-label="Color match">
+    <div class="ends"><span>Keep my colors</span><span>Full match</span></div>
+
+    <button class="mix-toggle" id="mixToggle" type="button" aria-pressed="false"><span>Mix two looks</span><i class="sw"></i></button>
+    <div class="mixbox" id="mixBox" hidden>
+      <div class="mixpick">
+        <button type="button" id="pickA" aria-pressed="false"><small>Look A</small><span id="nameA">—</span></button>
+        <button type="button" id="pickB" aria-pressed="true"><small>Look B</small><span id="nameB">Tap a look</span></button>
+      </div>
+      <p class="mixhelp" id="mixHelp">Pick A or B above, then tap a look in the strip.</p>
+      <div class="row-title"><b>Mix</b><output id="mixOut" for="mixAmount"></output></div>
+      <input type="range" id="mixAmount" min="0" max="100" value="50" aria-label="Mix amount">
+      <div class="ends"><span id="endA">More A</span><span id="endB">More B</span></div>
+    </div>
 
     <div class="actions">
       <button class="cta" id="develop" type="button">Develop full-size</button>
       <label class="ghost" for="file" id="change">Change photo</label>
     </div>
     <p class="status" id="status" aria-live="polite"></p>
-    <p class="foot">Previews are low-res. Intensity changes are instant.</p>
+    <p class="foot">Previews are low-res. Slider changes are instant.</p>
   </section>
 
   <!-- 3. result -->
   <section id="result" hidden>
-    <div class="vf"><img class="final" id="final" alt="Your developed photo"><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+    <div class="vf" id="vfSingle"><img class="final" id="final" alt="Your developed photo"><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+    <div class="grid" id="grid" hidden></div>
     <h2 class="result-title" id="resultTitle">Developed</h2>
     <p class="result-sub" id="resultSub"></p>
     <div class="actions">
       <button class="cta" id="save" type="button">Save photo</button>
       <div class="two">
         <button class="ghost" id="back" type="button">Back to looks</button>
-        <label class="ghost" for="file">New photo</label>
+        <label class="ghost" for="file">New photos</label>
       </div>
     </div>
   </section>
 
 </main>
 
+<!-- My Look builder -->
+<div class="sheet" id="sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="sheet-panel">
+    <h2 id="sheetTitle">Build My Look</h2>
+    <p>Pick {{ min_reference }} to {{ max_reference }} of your best <b>color</b> photos. Black-and-white shots and duplicates are skipped, and borders are trimmed for you. The look stays on this device.</p>
+    <input class="sr" type="file" id="lookFiles" accept="image/*" multiple>
+    <label class="cta" for="lookFiles" id="lookPick">Choose photos</label>
+    <p class="status" id="lookMsg" aria-live="polite"></p>
+    <div class="summary" id="lookSummary" hidden></div>
+    <div class="two">
+      <button class="ghost" id="lookClose" type="button">Close</button>
+      <button class="ghost" id="lookRemove" type="button" hidden>Remove My Look</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const STYLES = {{ styles|tojson }};
-  const DEFAULT_STRENGTH = {{ default_strength }};
+  const DEFAULTS = { strength: {{ default_strength }}, color: {{ default_color }} };
+  const LIMITS = { min: {{ min_reference }}, max: {{ max_reference }} };
   const PREVIEW_PX = 512;
-  const FULL_PX = 1200;
+  const FULL_PX = 4096;
+  const MAX_BATCH = 12;
   const ORIGINAL = "__original";
+  const BUILD = "__build";
+  const CUSTOM = "custom";
   const MESSAGES = [
-    "Dodging and burning…",
-    "Lifting the shadows…",
-    "Warming up the highlights…",
-    "Dusting off the sensor…",
-    "Developing in the darkroom…",
-    "Straightening the horizon…",
+    "Dodging and burning…", "Lifting the shadows…", "Warming up the highlights…",
+    "Dusting off the sensor…", "Developing in the darkroom…", "Straightening the horizon…",
   ];
 
   const $ = (s) => document.querySelector(s);
   const el = {
-    file: $("#file"), home: $("#home"), drop: $("#drop"), dropMsg: $("#dropMsg"),
+    file: $("#file"), home: $("#home"), drop: $("#drop"), dropMsg: $("#dropMsg"), homeMyLook: $("#homeMyLook"),
     studio: $("#studio"), result: $("#result"),
     vf: $("#vf"), stage: $("#stage"), badge: $("#badge"), flash: $("#flash"), busyText: $("#busyText"),
-    strength: $("#strength"), strengthOut: $("#strengthOut"), tags: $("#tags"), strip: $("#strip"),
+    bar: $("#bar"), barFill: $("#barFill"), cancelDevelop: $("#cancelDevelop"),
+    set: $("#set"), setLabel: $("#setLabel"), tags: $("#tags"), strip: $("#strip"),
+    strength: $("#strength"), strengthOut: $("#strengthOut"), color: $("#color"), colorOut: $("#colorOut"),
+    mixToggle: $("#mixToggle"), mixBox: $("#mixBox"), pickA: $("#pickA"), pickB: $("#pickB"),
+    nameA: $("#nameA"), nameB: $("#nameB"), mixHelp: $("#mixHelp"), mixAmount: $("#mixAmount"), mixOut: $("#mixOut"),
+    endA: $("#endA"), endB: $("#endB"),
     develop: $("#develop"), status: $("#status"),
-    final: $("#final"), save: $("#save"), back: $("#back"), resultTitle: $("#resultTitle"), resultSub: $("#resultSub"),
+    final: $("#final"), vfSingle: $("#vfSingle"), grid: $("#grid"), save: $("#save"), back: $("#back"),
+    resultTitle: $("#resultTitle"), resultSub: $("#resultSub"),
+    sheet: $("#sheet"), lookFiles: $("#lookFiles"), lookMsg: $("#lookMsg"), lookSummary: $("#lookSummary"),
+    lookClose: $("#lookClose"), lookRemove: $("#lookRemove"),
   };
 
+  /* ---------- storage (best effort: private mode can block it) ---------- */
+  const store = {
+    get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (_) { return null; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} },
+    del(k) { try { localStorage.removeItem(k); } catch (_) {} },
+  };
+
+  const prefs = Object.assign({ strength: DEFAULTS.strength, color: DEFAULTS.color, look: null }, store.get("sm.prefs") || {});
   const state = {
-    gen: 0, srcImg: null, srcUrl: null, original: null, smallBlob: null, smallUrl: null,
-    graded: {}, selected: STYLES[0].slug, strength: DEFAULT_STRENGTH / 100,
-    comparing: false, queue: [], running: false, paused: false, ctrl: null,
-    developing: false, resultUrl: null, resultFile: null, coldShown: false,
+    gen: 0, setGen: 0, files: [], refIndex: 0, srcImg: null, srcUrl: null, original: null, smallBlob: null,
+    graded: {}, selected: null, strength: prefs.strength / 100, color: prefs.color / 100,
+    comparing: false, mix: { on: false, b: null, target: "b", amount: 0.5 },
+    queue: [], running: false, paused: false, ctrl: null,
+    developing: false, devCtrl: null, results: [], coldShown: false,
+    myLook: store.get("sm.mylook"),
   };
   const chipEls = {};
-  const nameOf = (slug) => (STYLES.find((s) => s.slug === slug) || { name: "Original" }).name;
+  const savePrefs = () => store.set("sm.prefs", { strength: Math.round(state.strength * 100), color: Math.round(state.color * 100), look: state.selected });
+
+  /* ---------- look registry ---------- */
+  const allLooks = () => STYLES.concat(state.myLook ? [{ slug: CUSTOM, name: "My Look", tags: state.myLook.tags || [] }] : []);
+  const lookInfo = (slug) => (slug === ORIGINAL ? { slug, name: "Original", tags: [] } : allLooks().find((s) => s.slug === slug));
+  const nameOf = (slug) => (lookInfo(slug) || { name: "Original" }).name;
 
   /* ---------- helpers ---------- */
   function loadImage(url) {
@@ -494,7 +542,19 @@
   }
   const toBlob = (canvas, q) => new Promise((resolve, reject) =>
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not encode image"))), "image/jpeg", q));
-  function setStatus(msg) { el.status.textContent = msg || ""; }
+  function crop(img, sx, sy, w, h) {
+    const c = document.createElement("canvas");
+    c.width = w; c.height = h;
+    c.getContext("2d").drawImage(img, sx, sy, w, h, 0, 0, w, h);
+    return c;
+  }
+  function drawCover(canvas, src, size) {
+    const sw = src.naturalWidth || src.width, sh = src.naturalHeight || src.height;
+    const s = Math.min(sw, sh);
+    canvas.width = canvas.height = size;
+    canvas.getContext("2d").drawImage(src, (sw - s) / 2, (sh - s) / 2, s, s, 0, 0, size, size);
+  }
+  const setStatus = (msg) => { el.status.textContent = msg || ""; };
   function showView(name) {
     el.home.hidden = name !== "home";
     el.studio.hidden = name !== "studio";
@@ -502,8 +562,59 @@
     window.scrollTo({ top: 0 });
   }
   const buzz = () => { try { navigator.vibrate && navigator.vibrate(8); } catch (_) {} };
+  const fill = (input) => input.style.setProperty("--p", ((input.value - input.min) / (input.max - input.min)) * 100 + "%");
+  const baseName = (f) => (f.name || "photo").replace(/\.[^.]+$/, "").replace(/[^\w-]+/g, "_").slice(0, 40) || "photo";
+  const slugify = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-  /* ---------- drawing ---------- */
+  /* ---------- drawing: the original plus weighted look layers ---------- */
+  function layersFor(aSlug, bSlug) {
+    const A = state.graded[aSlug];
+    if (!A || !A.full) return null;
+    const s = state.strength, c = state.color;
+    let wa = 1, wb = 0, B = null;
+    if (bSlug) {
+      B = state.graded[bSlug];
+      if (B && B.full) { wb = state.mix.amount; wa = 1 - wb; }
+    }
+    const list = [[state.original, 1 - s], [A.tone, s * wa * (1 - c)], [A.full, s * wa * c]];
+    if (wb > 0) list.push([B.tone, s * wb * (1 - c)], [B.full, s * wb * c]);
+    return list.filter((x) => x[1] > 0.0005);
+  }
+  const layers = () => layersFor(state.selected, state.mix.on ? state.mix.b : null);
+
+  // running weighted average: each layer's alpha is its share of the weight so far
+  function paintLayers(ctx, w, h, list) {
+    let total = 0;
+    for (const [img, wt] of list) {
+      total += wt;
+      ctx.globalAlpha = wt / total;
+      ctx.drawImage(img, 0, 0, w, h);
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // filmstrip thumbnails show each look at the current intensity and color match
+  const thumbCanvas = document.createElement("canvas");
+  function renderThumb(slug) {
+    const b = chipEls[slug], g = state.graded[slug];
+    if (!b || slug === ORIGINAL || slug === BUILD || !g || !g.full || !state.original) return;
+    const o = state.original;
+    thumbCanvas.width = o.width; thumbCanvas.height = o.height;
+    const ctx = thumbCanvas.getContext("2d");
+    ctx.globalAlpha = 1;
+    ctx.drawImage(o, 0, 0);
+    paintLayers(ctx, o.width, o.height, layersFor(slug, null));
+    drawCover(b.querySelector("canvas"), thumbCanvas, 192);
+  }
+  let thumbTimer = 0;
+  function scheduleThumbs() {
+    if (thumbTimer) return;
+    thumbTimer = setTimeout(() => {
+      thumbTimer = 0;
+      Object.keys(chipEls).forEach(renderThumb);
+    }, 30);
+  }
+
   function draw() {
     const o = state.original;
     if (!o) return;
@@ -514,18 +625,16 @@
     ctx.drawImage(o, 0, 0);
 
     const sel = state.selected;
-    const g = state.graded[sel];
-    const ready = g && g.img;
-    if (sel !== ORIGINAL && !state.comparing && ready) {
-      ctx.globalAlpha = state.strength;
-      ctx.drawImage(g.img, 0, 0, c.width, c.height);
-      ctx.globalAlpha = 1;
-    }
+    const list = sel !== ORIGINAL && !state.comparing ? layers() : null;
+    if (list) paintLayers(ctx, c.width, c.height, list);
 
+    const g = state.graded[sel];
     let text;
     if (sel === ORIGINAL || state.comparing) text = "Original";
-    else if (ready) text = nameOf(sel);
-    else if (g === "error") text = nameOf(sel) + " · tap to retry";
+    else if (g && g.full) {
+      text = nameOf(sel);
+      if (state.mix.on && state.mix.b) text += " + " + nameOf(state.mix.b);
+    } else if (g === "error") text = nameOf(sel) + " · tap to retry";
     else text = nameOf(sel) + " · rendering…";
     el.badge.textContent = text;
     el.vf.classList.toggle("compare", state.comparing);
@@ -533,37 +642,34 @@
 
   function renderTags() {
     el.tags.innerHTML = "";
-    if (state.selected === ORIGINAL) {
-      const cap = document.createElement("span");
-      cap.className = "cap";
-      cap.textContent = "As shot. Tap a look to try it on.";
-      el.tags.appendChild(cap);
-      return;
+    const add = (cls, text) => { const s = document.createElement("span"); s.className = cls; s.textContent = text; el.tags.appendChild(s); return s; };
+    if (state.selected === ORIGINAL) { add("cap", "As shot. Tap a look to try it on."); return; }
+    const info = lookInfo(state.selected);
+    if (!info) return;
+    info.tags.forEach((t) => add("t", t));
+    if (state.mix.on && state.mix.b) add("cap", "mixed with " + nameOf(state.mix.b));
+    else add("cap", state.selected === CUSTOM ? "measured from your photos" : "measured from their photos");
+    if (state.selected === CUSTOM) {
+      const b = document.createElement("button");
+      b.className = "linkbtn"; b.type = "button"; b.textContent = "Edit";
+      b.addEventListener("click", openBuilder);
+      el.tags.appendChild(b);
     }
-    const style = STYLES.find((s) => s.slug === state.selected);
-    style.tags.forEach((t) => {
-      const s = document.createElement("span");
-      s.className = "t";
-      s.textContent = t;
-      el.tags.appendChild(s);
-    });
-    const cap = document.createElement("span");
-    cap.className = "cap";
-    cap.textContent = "measured from their photos";
-    el.tags.appendChild(cap);
   }
 
   function updateCta() {
     const original = state.selected === ORIGINAL;
     el.develop.disabled = original || state.developing;
-    el.develop.textContent = original ? "Pick a look first" : "Develop full-size";
+    const n = state.files.length;
+    el.develop.textContent = original ? "Pick a look first" : n > 1 ? "Develop " + n + " photos" : "Develop full-size";
   }
 
   /* ---------- filmstrip ---------- */
   function buildStrip() {
     el.strip.innerHTML = "";
     Object.keys(chipEls).forEach((k) => delete chipEls[k]);
-    const items = [{ slug: ORIGINAL, name: "Original" }, ...STYLES];
+    const items = [{ slug: ORIGINAL, name: "Original" }, ...allLooks()];
+    if (!state.myLook) items.push({ slug: BUILD, name: "My Look" });
     items.forEach((s) => {
       const b = document.createElement("button");
       b.type = "button";
@@ -571,47 +677,117 @@
       b.setAttribute("role", "option");
       b.setAttribute("aria-selected", "false");
       b.dataset.slug = s.slug;
+      const plus = s.slug === BUILD;
       b.innerHTML =
-        '<span class="thumb"><img alt=""><i class="check">✓</i><span class="errmsg"><span>Couldn’t load</span><span>Tap to retry</span></span></span>' +
-        '<span class="cname"></span>';
-      b.querySelector("img").src = state.smallUrl;
+        '<span class="thumb' + (plus ? " plus" : "") + '">' +
+        (plus ? "+" : '<canvas></canvas><i class="mark a">✓</i><i class="mark b">2</i><span class="errmsg"><span>Couldn’t load</span><span>Tap to retry</span></span>') +
+        '</span><span class="cname"></span>';
       b.querySelector(".cname").textContent = s.name;
-      b.addEventListener("click", () => { buzz(); select(s.slug); });
+      b.addEventListener("click", () => { buzz(); onChip(s.slug); });
       chipEls[s.slug] = b;
       el.strip.appendChild(b);
-      if (s.slug !== ORIGINAL) setChip(s.slug, "loading");
+      if (plus) return;
+      const cv = b.querySelector("canvas");
+      if (s.slug === ORIGINAL) { drawCover(cv, state.original, 192); return; }
+      drawCover(cv, state.original, 192);
+      const g = state.graded[s.slug];
+      if (g && g.full) setChip(s.slug, "ready");
+      else setChip(s.slug, g === "error" ? "error" : "loading");
     });
+    refreshChips();
   }
   function setChip(slug, mode) {
     const b = chipEls[slug];
-    if (!b) return;
+    if (!b || slug === BUILD) return;
     const thumb = b.querySelector(".thumb");
     thumb.classList.toggle("loading", mode === "loading");
     thumb.classList.toggle("err", mode === "error");
-    if (mode === "ready") b.querySelector("img").src = state.graded[slug].url;
+    if (mode === "ready") renderThumb(slug);
+  }
+  function refreshChips() {
+    for (const [s, b] of Object.entries(chipEls)) {
+      const a = s === state.selected;
+      const bb = state.mix.on && s === state.mix.b;
+      b.classList.toggle("on", a);
+      b.classList.toggle("on-b", bb);
+      b.setAttribute("aria-selected", String(a));
+    }
+  }
+
+  function onChip(slug) {
+    if (state.developing) return;
+    if (slug === BUILD) { openBuilder(); return; }
+    if (state.mix.on) {
+      if (slug === ORIGINAL) { setStatus("Mixing works between two looks. Turn Mix off to see the original."); return; }
+      assignMix(slug);
+    } else {
+      select(slug);
+    }
+  }
+
+  function ensureRendered(slug) {
+    if (slug === ORIGINAL) return;
+    const g = state.graded[slug];
+    if (g === "error") { state.graded[slug] = undefined; setChip(slug, "loading"); prioritize(slug); }
+    else if (!g) prioritize(slug);
   }
 
   function select(slug) {
-    if (state.developing) return;
+    if (state.developing || !lookInfo(slug)) return;
     state.selected = slug;
-    for (const [s, b] of Object.entries(chipEls)) {
-      const on = s === slug;
-      b.classList.toggle("on", on);
-      b.setAttribute("aria-selected", String(on));
-    }
-    if (slug !== ORIGINAL) {
-      const g = state.graded[slug];
-      if (g === "error") { state.graded[slug] = undefined; setChip(slug, "loading"); prioritize(slug); }
-      else if (!g) prioritize(slug);
-    }
+    ensureRendered(slug);
+    afterSelectionChange(slug);
+  }
+  function afterSelectionChange(scrollTo) {
+    refreshChips();
+    syncMixUi();
     renderTags();
     draw();
     updateCta();
+    savePrefs();
     el.stage.classList.remove("pop");
     void el.stage.offsetWidth;
     el.stage.classList.add("pop");
-    const b = chipEls[slug];
-    el.strip.scrollTo({ left: b.offsetLeft - (el.strip.clientWidth - b.offsetWidth) / 2, behavior: "smooth" });
+    const b = chipEls[scrollTo];
+    if (b) el.strip.scrollTo({ left: b.offsetLeft - (el.strip.clientWidth - b.offsetWidth) / 2, behavior: "smooth" });
+  }
+
+  /* ---------- mixing two looks ---------- */
+  function assignMix(slug) {
+    const m = state.mix, a = state.selected;
+    if (m.target === "a") {
+      if (slug === m.b) m.b = a;           // picking B's look as A swaps them
+      state.selected = slug;
+    } else {
+      if (slug === a) { setStatus("Pick a different look for B."); return; }
+      m.b = slug;
+    }
+    ensureRendered(state.selected);
+    ensureRendered(m.b);
+    setStatus("");
+    afterSelectionChange(slug);
+  }
+  function setMixOn(on) {
+    state.mix.on = on;
+    if (!on) state.mix.b = null;
+    state.mix.target = "b";
+    el.mixToggle.setAttribute("aria-pressed", String(on));
+    el.mixBox.hidden = !on;
+    setStatus(on ? "Tap a second look in the strip." : "");
+    if (on && state.selected === ORIGINAL) select(allLooks()[0].slug);
+    afterSelectionChange(state.selected);
+  }
+  function syncMixUi() {
+    const m = state.mix;
+    el.nameA.textContent = nameOf(state.selected);
+    el.nameB.textContent = m.b ? nameOf(m.b) : "Tap a look";
+    el.pickA.setAttribute("aria-pressed", String(m.target === "a"));
+    el.pickB.setAttribute("aria-pressed", String(m.target === "b"));
+    el.endA.textContent = "More " + nameOf(state.selected);
+    el.endB.textContent = m.b ? "More " + nameOf(m.b) : "More B";
+    el.mixHelp.textContent = m.b
+      ? "Tap " + (m.target === "a" ? "A" : "B") + " above to switch which look the strip changes."
+      : "Tap a look in the strip to pick Look B.";
   }
 
   /* ---------- preview queue ---------- */
@@ -625,12 +801,15 @@
     const fd = new FormData();
     fd.append("photo", state.smallBlob, "preview.jpg");
     fd.append("style", slug);
+    if (slug === CUSTOM) fd.append("profile", JSON.stringify(state.myLook.profile));
     const res = await fetch("/preview", { method: "POST", body: fd, signal });
     if (!res.ok) throw new Error("preview failed");
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
+    const url = URL.createObjectURL(await res.blob());
     const img = await loadImage(url);
-    return { img, url };
+    URL.revokeObjectURL(url);
+    const w = state.original.width, h = state.original.height;
+    if (img.naturalWidth !== w || img.naturalHeight !== h * 2) throw new Error("unexpected preview size");
+    return { tone: crop(img, 0, 0, w, h), full: crop(img, 0, h, w, h) };
   }
 
   async function runQueue() {
@@ -640,21 +819,22 @@
     while (state.queue.length && !state.paused && gen === state.gen) {
       const slug = state.queue.shift();
       const have = state.graded[slug];
-      if (have && have.img) continue;
+      if (have && have.full) continue;
+      if (!lookInfo(slug)) continue;
       setChip(slug, "loading");
       state.ctrl = new AbortController();
-      const anyReady = Object.values(state.graded).some((g) => g && g.img);
+      const anyReady = Object.values(state.graded).some((g) => g && g.full);
       const coldTimer = anyReady ? null : setTimeout(() => {
         state.coldShown = true;
         setStatus("Waking the darkroom… the free server naps when idle, so the first look can take 30–50 seconds.");
       }, 6000);
       try {
         const r = await fetchPreview(slug, state.ctrl.signal);
-        if (gen !== state.gen) { URL.revokeObjectURL(r.url); break; }
+        if (gen !== state.gen) break;
         state.graded[slug] = r;
         setChip(slug, "ready");
         if (state.coldShown) { setStatus(""); state.coldShown = false; }
-        if (slug === state.selected) draw();
+        if (slug === state.selected || slug === state.mix.b) draw();
       } catch (err) {
         if (gen !== state.gen) break;
         if (err.name === "AbortError") { state.queue.unshift(slug); break; }
@@ -669,87 +849,162 @@
     if (gen === state.gen && !state.paused && state.queue.length) runQueue();
   }
 
-  function resetSession() {
+  function resetPreviews() {
     state.gen += 1;
     if (state.ctrl) state.ctrl.abort();
-    Object.values(state.graded).forEach((g) => g && g.url && URL.revokeObjectURL(g.url));
-    [state.srcUrl, state.smallUrl, state.resultUrl].forEach((u) => u && URL.revokeObjectURL(u));
+    if (state.srcUrl) URL.revokeObjectURL(state.srcUrl);
     Object.assign(state, {
-      srcImg: null, srcUrl: null, original: null, smallBlob: null, smallUrl: null, graded: {},
-      queue: [], running: false, paused: false, developing: false, resultUrl: null, resultFile: null,
-      comparing: false, coldShown: false,
+      srcImg: null, srcUrl: null, original: null, smallBlob: null, graded: {},
+      queue: [], running: false, paused: false, comparing: false, coldShown: false,
     });
     el.vf.classList.remove("busy");
-    setStatus("");
   }
 
-  /* ---------- loading a photo ---------- */
-  async function onFile(file) {
-    if (!file) return;
+  /* ---------- loading photos ---------- */
+  async function onFiles(list) {
+    const files = [...list].filter((f) => !f.type || f.type.startsWith("image/"));
+    if (!files.length) { showView("home"); el.dropMsg.textContent = "Those don’t look like photos. Try JPG or PNG files."; return; }
     el.dropMsg.textContent = "";
+    const trimmed = files.length > MAX_BATCH;
+    state.files = files.slice(0, MAX_BATCH);
+    state.setGen += 1;
+    const ok = await setReference(0, true);
+    if (ok && trimmed) setStatus("Using the first " + MAX_BATCH + " photos.");
+  }
+
+  async function setReference(index, first) {
+    const file = state.files[index];
     const url = URL.createObjectURL(file);
     let img;
     try {
       img = await loadImage(url);
     } catch (_) {
       URL.revokeObjectURL(url);
-      showView("home");
-      el.dropMsg.textContent = "That file didn’t open. Try a JPG or PNG from your photos.";
-      return;
+      if (first) { showView("home"); el.dropMsg.textContent = "That file didn’t open. Try a JPG or PNG from your photos."; }
+      else setStatus("That photo didn’t open.");
+      return false;
     }
-    resetSession();
+    resetPreviews();
+    state.refIndex = index;
     state.srcImg = img;
     state.srcUrl = url;
     state.original = scaleToCanvas(img, PREVIEW_PX);
-    state.smallBlob = await toBlob(state.original, 0.85);
-    state.smallUrl = URL.createObjectURL(state.smallBlob);
+    state.smallBlob = await toBlob(state.original, 0.88);
+
+    if (first && !state.selected) {
+      state.selected = prefs.look && lookInfo(prefs.look) ? prefs.look : STYLES[0].slug;
+    }
+    if (!lookInfo(state.selected) && state.selected !== ORIGINAL) state.selected = STYLES[0].slug;
+    if (state.mix.b && !lookInfo(state.mix.b)) state.mix.b = null;
 
     buildStrip();
-    state.selected = STYLES[0].slug;
-    state.queue = STYLES.map((s) => s.slug);
+    buildSet(first);
     showView("studio");
-    select(state.selected);
+    state.queue = allLooks().map((s) => s.slug).filter((s) => s !== state.selected && s !== state.mix.b);
+    if (state.mix.b) state.queue.unshift(state.mix.b);
+    if (state.selected !== ORIGINAL) state.queue.unshift(state.selected);
+    afterSelectionChange(state.selected);
     runQueue();
+    return true;
   }
 
-  /* ---------- develop full size ---------- */
+  function buildSet(rebuild) {
+    const many = state.files.length > 1;
+    el.set.hidden = el.setLabel.hidden = !many;
+    if (!many) { el.set.innerHTML = ""; return; }
+    if (rebuild) {
+      el.set.innerHTML = "";
+      state.files.forEach((f, i) => {
+        const b = document.createElement("button");
+        b.type = "button"; b.className = "setthumb"; b.setAttribute("aria-label", "Photo " + (i + 1));
+        b.innerHTML = "<canvas></canvas>";
+        b.addEventListener("click", () => { if (i !== state.refIndex && !state.developing) setReference(i, false); });
+        el.set.appendChild(b);
+      });
+      const sg = state.setGen;
+      (async () => {
+        for (let i = 0; i < state.files.length; i++) {
+          if (sg !== state.setGen) return;
+          const u = URL.createObjectURL(state.files[i]);
+          try { drawCover(el.set.children[i].querySelector("canvas"), await loadImage(u), 112); } catch (_) {}
+          URL.revokeObjectURL(u);
+        }
+      })();
+    }
+    [...el.set.children].forEach((b, i) => b.classList.toggle("on", i === state.refIndex));
+    el.setLabel.textContent = "Your set · " + state.files.length + " photos · previewing on #" + (state.refIndex + 1);
+  }
+
+  /* ---------- develop ---------- */
   let msgTimer = null;
   function startMessages() {
     let i = 0;
     el.busyText.textContent = MESSAGES[0];
     msgTimer = setInterval(() => { i = (i + 1) % MESSAGES.length; el.busyText.textContent = MESSAGES[i]; }, 1700);
   }
-  function stopMessages() { clearInterval(msgTimer); msgTimer = null; }
+  const stopMessages = () => { clearInterval(msgTimer); msgTimer = null; };
+
+  function developFields(fd) {
+    const m = state.mix;
+    fd.append("style", state.selected);
+    fd.append("strength", state.strength.toFixed(3));
+    fd.append("color", state.color.toFixed(3));
+    const mixing = m.on && m.b;
+    if (mixing) { fd.append("style2", m.b); fd.append("mix", m.amount.toFixed(3)); }
+    if (state.selected === CUSTOM || (mixing && m.b === CUSTOM)) fd.append("profile", JSON.stringify(state.myLook.profile));
+  }
+
+  async function decodeFile(file, index) {
+    if (index === state.refIndex && state.srcImg) return state.srcImg;
+    const u = URL.createObjectURL(file);
+    try { return await loadImage(u); } finally { URL.revokeObjectURL(u); }
+  }
 
   async function develop() {
     if (state.selected === ORIGINAL || state.developing) return;
     state.developing = true;
     state.paused = true;
     if (state.ctrl) state.ctrl.abort();
+    state.devCtrl = new AbortController();
+    const files = state.files, n = files.length;
     el.vf.classList.add("busy");
     el.flash.classList.remove("go"); void el.flash.offsetWidth; el.flash.classList.add("go");
+    el.bar.hidden = n < 2;
+    el.cancelDevelop.hidden = n < 2;
+    el.barFill.style.width = "0%";
     el.develop.disabled = true;
     setStatus("");
     startMessages();
-    const slug = state.selected;
+    const tag = slugify(nameOf(state.selected) + (state.mix.on && state.mix.b ? "-" + nameOf(state.mix.b) : ""));
+    const results = [];
+    let cancelled = false;
     try {
-      const blob = await toBlob(scaleToCanvas(state.srcImg, FULL_PX), 0.92);
-      const fd = new FormData();
-      fd.append("photo", blob, "photo.jpg");
-      fd.append("style", slug);
-      fd.append("strength", state.strength.toFixed(2));
-      const res = await fetch("/grade", { method: "POST", body: fd });
-      if (!res.ok) throw new Error("The server hit a snag. Try again in a moment.");
-      const out = await res.blob();
-      if (state.resultUrl) URL.revokeObjectURL(state.resultUrl);
-      state.resultUrl = URL.createObjectURL(out);
-      state.resultFile = new File([out], slug + "_graded.jpg", { type: "image/jpeg" });
-      el.final.src = state.resultUrl;
-      el.resultTitle.textContent = nameOf(slug);
-      el.resultSub.textContent = "Developed at " + Math.round(state.strength * 100) + "% intensity";
-      showView("result");
+      for (let i = 0; i < n; i++) {
+        if (n > 1) {
+          stopMessages();
+          el.busyText.textContent = "Developing " + (i + 1) + " of " + n + "…";
+          el.barFill.style.width = (i / n) * 100 + "%";
+        }
+        const img = await decodeFile(files[i], i);
+        const blob = await toBlob(scaleToCanvas(img, FULL_PX), 0.95);
+        const fd = new FormData();
+        fd.append("photo", blob, "photo.jpg");
+        developFields(fd);
+        const res = await fetch("/grade", { method: "POST", body: fd, signal: state.devCtrl.signal });
+        if (!res.ok) throw new Error("The server hit a snag. Try again in a moment.");
+        const out = await res.blob();
+        results.push({
+          url: URL.createObjectURL(out),
+          file: new File([out], baseName(files[i]) + "-" + tag + ".jpg", { type: "image/jpeg" }),
+        });
+      }
+      state.results.forEach((r) => URL.revokeObjectURL(r.url));
+      state.results = results;
+      showResult();
     } catch (err) {
-      setStatus("Couldn’t develop that one: " + err.message);
+      results.forEach((r) => URL.revokeObjectURL(r.url));
+      if (err.name === "AbortError") { cancelled = true; setStatus("Cancelled."); }
+      else setStatus("Couldn’t develop: " + err.message);
     } finally {
       stopMessages();
       el.vf.classList.remove("busy");
@@ -757,38 +1012,159 @@
       updateCta();
       if (!el.studio.hidden) { state.paused = false; runQueue(); }
     }
+    return cancelled;
   }
 
-  async function savePhoto() {
-    if (!state.resultFile) return;
-    if (navigator.canShare && navigator.canShare({ files: [state.resultFile] })) {
-      try { await navigator.share({ files: [state.resultFile] }); }
+  function showResult() {
+    const rs = state.results, many = rs.length > 1;
+    el.vfSingle.hidden = many;
+    el.grid.hidden = !many;
+    el.grid.innerHTML = "";
+    if (many) {
+      rs.forEach((r) => {
+        const f = document.createElement("figure");
+        const im = document.createElement("img"); im.src = r.url; im.alt = r.file.name;
+        const b = document.createElement("button"); b.type = "button"; b.textContent = "Save";
+        b.addEventListener("click", () => saveFiles([r.file]));
+        f.append(im, b);
+        el.grid.appendChild(f);
+      });
+    } else {
+      el.final.src = rs[0].url;
+    }
+    let title = nameOf(state.selected);
+    if (state.mix.on && state.mix.b) title += " + " + nameOf(state.mix.b);
+    el.resultTitle.textContent = title;
+    el.resultSub.textContent = (many ? rs.length + " photos" : "Full size") + " · " + Math.round(state.strength * 100) +
+      "% intensity · " + Math.round(state.color * 100) + "% color match";
+    el.save.textContent = many ? "Save all " + rs.length : "Save photo";
+    showView("result");
+  }
+
+  async function saveFiles(files) {
+    if (navigator.canShare && navigator.canShare({ files })) {
+      try { await navigator.share({ files }); }
       catch (err) { if (err.name !== "AbortError") setStatus("Couldn’t open the share sheet: " + err.message); }
       return;
     }
-    const a = document.createElement("a");
-    a.href = state.resultUrl;
-    a.download = state.resultFile.name;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+    for (const f of files) {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(f);
+      a.download = f.name;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      await new Promise((r) => setTimeout(r, 350));
+    }
+  }
+
+  /* ---------- My Look builder ---------- */
+  function openBuilder() {
+    el.sheet.hidden = false;
+    el.lookMsg.textContent = "";
+    el.lookSummary.hidden = true;
+    el.lookRemove.hidden = !state.myLook;
+    el.lookFiles.value = "";
+  }
+  const closeBuilder = () => { el.sheet.hidden = true; };
+
+  async function onLookFiles(list) {
+    const files = [...list].filter((f) => !f.type || f.type.startsWith("image/"));
+    el.lookSummary.hidden = true;
+    if (files.length < LIMITS.min || files.length > LIMITS.max) {
+      el.lookMsg.textContent = "Choose between " + LIMITS.min + " and " + LIMITS.max + " photos (you picked " + files.length + ").";
+      return;
+    }
+    el.lookMsg.textContent = "Reading your photos…";
+    try {
+      const fd = new FormData();
+      for (const f of files) {
+        const u = URL.createObjectURL(f);
+        let img;
+        try { img = await loadImage(u); } finally { URL.revokeObjectURL(u); }
+        fd.append("photos", await toBlob(scaleToCanvas(img, PREVIEW_PX), 0.88), "ref.jpg");
+      }
+      el.lookMsg.textContent = "Measuring your look…";
+      const res = await fetch("/build-look", { method: "POST", body: fd });
+      let data = null;
+      try { data = await res.json(); } catch (_) {}
+      if (!res.ok) throw new Error((data && data.error) || "Couldn’t build the look. Try different photos.");
+      state.myLook = { profile: data.profile, tags: data.tags, used: data.used, total: data.total };
+      store.set("sm.mylook", state.myLook);
+      showLookSummary(data);
+      el.lookMsg.textContent = "My Look is ready.";
+      el.lookRemove.hidden = false;
+      onMyLookChanged(true);
+    } catch (err) {
+      el.lookMsg.textContent = err.message;
+    }
+  }
+
+  function showLookSummary(data) {
+    const counts = {};
+    data.notes.forEach((n) => { const k = n.action === "trimmed" ? "borders trimmed" : n.reason; counts[k] = (counts[k] || 0) + 1; });
+    el.lookSummary.innerHTML = "";
+    const line = (t) => { const d = document.createElement("div"); d.textContent = t; el.lookSummary.appendChild(d); };
+    line("Used " + data.used + " of " + data.total + " photos.");
+    Object.entries(counts).forEach(([k, v]) => line("• " + v + " " + k));
+    if (data.tags.length) line("Your look: " + data.tags.join(" · "));
+    el.lookSummary.hidden = false;
+  }
+
+  function onMyLookChanged(select) {
+    el.homeMyLook.hidden = !state.myLook;
+    if (el.studio.hidden) return;
+    const keepSelected = state.selected, keepB = state.mix.b;
+    delete state.graded[CUSTOM];
+    buildStrip();
+    if (state.myLook) {
+      state.queue = [CUSTOM].concat(state.queue.filter((s) => s !== CUSTOM));
+      if (select) { state.selected = CUSTOM; }
+    } else {
+      if (keepSelected === CUSTOM) state.selected = STYLES[0].slug;
+      if (keepB === CUSTOM) state.mix.b = null;
+    }
+    ensureRendered(state.selected);
+    afterSelectionChange(state.selected);
+    runQueue();
+    if (select) setTimeout(closeBuilder, 900);
+  }
+
+  function removeLook() {
+    state.myLook = null;
+    store.del("sm.mylook");
+    el.lookRemove.hidden = true;
+    el.lookSummary.hidden = true;
+    el.lookMsg.textContent = "My Look removed.";
+    onMyLookChanged(false);
   }
 
   /* ---------- wiring ---------- */
   el.file.addEventListener("click", () => { el.file.value = ""; });
-  el.file.addEventListener("change", (e) => onFile(e.target.files[0]));
+  el.file.addEventListener("change", (e) => onFiles(e.target.files));
   el.develop.addEventListener("click", develop);
-  el.save.addEventListener("click", savePhoto);
+  el.cancelDevelop.addEventListener("click", () => { if (state.devCtrl) state.devCtrl.abort(); });
+  el.save.addEventListener("click", () => saveFiles(state.results.map((r) => r.file)));
   el.back.addEventListener("click", () => { showView("studio"); state.paused = false; runQueue(); });
 
   el.strength.addEventListener("input", () => {
-    const v = Number(el.strength.value);
-    state.strength = v / 100;
-    el.strengthOut.textContent = v + "%";
-    el.strength.style.setProperty("--p", v + "%");
-    draw();
+    state.strength = el.strength.value / 100;
+    el.strengthOut.textContent = el.strength.value + "%";
+    fill(el.strength); savePrefs(); draw(); scheduleThumbs();
   });
-  el.strength.style.setProperty("--p", DEFAULT_STRENGTH + "%");
+  el.color.addEventListener("input", () => {
+    state.color = el.color.value / 100;
+    el.colorOut.textContent = el.color.value + "%";
+    fill(el.color); savePrefs(); draw(); scheduleThumbs();
+  });
+  el.mixAmount.addEventListener("input", () => {
+    state.mix.amount = el.mixAmount.value / 100;
+    el.mixOut.textContent = el.mixAmount.value + "% B";
+    fill(el.mixAmount); draw();
+  });
+  el.mixToggle.addEventListener("click", () => setMixOn(!state.mix.on));
+  el.pickA.addEventListener("click", () => { state.mix.target = "a"; syncMixUi(); });
+  el.pickB.addEventListener("click", () => { state.mix.target = "b"; syncMixUi(); });
 
   // press and hold the photo to see the original
   el.vf.addEventListener("pointerdown", () => { if (!state.developing) { state.comparing = true; draw(); } });
@@ -800,9 +1176,24 @@
   ["dragenter", "dragover"].forEach((t) => window.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.add("over"); }));
   ["dragleave", "drop"].forEach((t) => window.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.remove("over"); }));
   window.addEventListener("drop", (e) => {
-    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-    if (f) onFile(f);
+    if (!el.sheet.hidden) return;
+    const fl = e.dataTransfer && e.dataTransfer.files;
+    if (fl && fl.length) onFiles(fl);
   });
+
+  // My Look builder
+  $("#openBuilderHome").addEventListener("click", openBuilder);
+  el.lookFiles.addEventListener("change", (e) => onLookFiles(e.target.files));
+  el.lookClose.addEventListener("click", closeBuilder);
+  el.lookRemove.addEventListener("click", removeLook);
+  el.sheet.addEventListener("click", (e) => { if (e.target === el.sheet) closeBuilder(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !el.sheet.hidden) closeBuilder(); });
+
+  // initial control state
+  el.strength.value = prefs.strength; el.strengthOut.textContent = prefs.strength + "%"; fill(el.strength);
+  el.color.value = prefs.color; el.colorOut.textContent = prefs.color + "%"; fill(el.color);
+  el.mixOut.textContent = "50% B"; fill(el.mixAmount);
+  el.homeMyLook.hidden = !state.myLook;
 </script>
 </body>
 </html>

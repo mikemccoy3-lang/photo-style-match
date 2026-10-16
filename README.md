@@ -97,31 +97,50 @@ correction feels too aggressive on a given photo.
 
 ## Web app (`web_app/`)
 
-A Flask front end so you can grade a photo from your phone without touching
+A Flask front end so you can grade photos from your phone without touching
 the CLI. The flow:
 
-1. **Choose a photo.** The browser shrinks it to 512px and shows it in a
-   viewfinder.
-2. **Browse looks.** The small copy is sent to `POST /preview` once per
-   photographer (one at a time, selected look first). Each returns a
-   full-strength graded preview, shown as a filmstrip of *your own photo*
-   in every style. Tap a thumbnail to put that look in the viewfinder.
-   Press and hold the photo to see the original.
-3. **Intensity slider.** Blends the preview with the original on a canvas
-   in the browser, so it's instant and costs no server calls. The same
-   value is sent as `strength` when you develop.
-4. **Develop full-size.** Sends a 1200px copy to `POST /grade` with the
-   chosen style and strength, then shows the result with a Save button
-   (share sheet on phones, download on desktop).
+1. **Choose photos.** One photo, or a set of up to 12. The browser shrinks
+   one to 512px and shows it in a sticky viewfinder (it stays pinned while
+   you drag sliders). With a set, tap any thumbnail to preview looks on
+   that photo.
+2. **Browse looks.** The small copy goes to `POST /preview` once per look
+   (selected look first). Each response is a stacked JPEG: tone-only on
+   top, tone + color below. They show as a filmstrip of *your own photo* in
+   every look. Tap one to put it in the viewfinder; press and hold the
+   photo to see the original.
+3. **Intensity and Color match sliders.** Both blend the previews with the
+   original on a canvas in the browser, so they are instant and cost no
+   server calls. *Color match* is the "keep my colors" control: 0% borrows
+   only the photographer's tone and contrast, 100% also moves your color
+   balance toward theirs. The default is 50%, because at 100% saturated
+   paint rotated ~15-20 degrees in hue and lost 30-60% of its saturation
+   (a blue car turned purple); at 50% the drift is ~5-9 degrees.
+4. **Mix two looks.** Pick look A and look B and blend them with a slider.
+   The page composites weighted layers; the server bakes the same weights
+   into one table.
+5. **Develop full-size.** Sends up to 4096px per photo to `POST /grade`
+   (style, optional style2 + mix, strength, color), one at a time with
+   progress and a Cancel button for sets, then shows the result with a Save
+   button (share sheet on phones, download on desktop).
+6. **My Look.** Build a personal look from 3-15 of your own color photos
+   (`POST /build-look`). References are screened the same way I screen
+   photographers' sets: white/black bars are trimmed, black-and-white frames,
+   duplicates and tiny images are skipped, and the page reports what it did.
+   The resulting profile (a few KB of numbers) is kept in the browser's
+   localStorage and sent with later requests as `style=custom` plus a
+   `profile` field, so nothing about you is stored on the server. It is
+   validated strictly on arrival (`LookProfile.from_untrusted`).
 
-Each look also shows plain-English traits (Dark, Punchy, Matte, Cool...)
-computed from the profile's own statistics by `describe_look()` in
-`web_app/app.py`, so the labels stay tied to what was actually measured.
+The page also remembers your last look, intensity and color match.
 
-It reuses the same `style_match` engine and reads whichever
-`profiles/<name>/profile.json` files exist -- add a new photographer via
-the CLI workflow above and it shows up automatically once you add it to the
-`STYLES` dict in `web_app/app.py`.
+Each look shows plain-English traits (Dark, Punchy, Matte, Cool...) computed
+from the profile's own statistics by `describe_look()` in `web_app/app.py`,
+so the labels stay tied to what was actually measured.
+
+It reads whichever `profiles/<name>/profile.json` files exist -- add a new
+photographer via the CLI workflow above and it shows up automatically once
+you add it to the `STYLES` dict in `web_app/app.py`.
 
 Everything runs in memory (no disk writes), so it's safe to deploy on a
 host with an ephemeral filesystem like Render's free tier.
@@ -168,10 +187,23 @@ no browser bar. iPhone: Safari → Share → Add to Home Screen. Android: Chrome
 are unreliable inside an installed iOS home-screen app. Icons are generated
 by a one-off Pillow script; regenerate them if you want a new look.
 
-**Memory note:** Render's free instance has 512MB RAM total. scikit-image's
-LAB color conversion allocates several full-resolution float64 arrays at
-once, which on top of the Flask/gunicorn/numpy/scikit-image baseline
-footprint can exceed that even for a modest few-megapixel photo. The web
-app downscales every upload to 1200px on the long edge before grading
-(`MAX_DIMENSION` in `web_app/app.py`) to stay well under the limit -- raise
-it only if you move to a paid instance with more RAM.
+**How the engine stays inside 512MB:** `style_match/apply.py` is the exact
+reference pipeline (used by the CLI), but it allocates several full-size
+float64 arrays and crashed the free instance on a 2.8MP photo. The web app
+uses `style_match/transform.py` instead. A look is a fixed function of each
+pixel's color once the photo's own statistics are known, so it measures
+those on a 512px copy, evaluates the look on a 65x65x65 grid of colors,
+bakes intensity / color match / mixing into that grid, and lets Pillow apply
+the grid to the full-size photo (`ImageFilter.Color3DLUT`, trilinear). Against
+the exact pipeline the difference averages ~1.3 levels out of 255. A 12.6MP
+photo adds ~100MB at peak and takes ~0.4s locally, so `MAX_DIMENSION` is
+4096. Tests in `tests/` check that match, that preview blending equals the
+final render, that mixing is linear, and the profile validation and
+reference screening (`python3 -m unittest discover -s tests`).
+
+**Staying awake:** Render's free instance sleeps after ~15 idle minutes.
+`.github/workflows/keepalive.yml` pings `/healthz` every 10 minutes so the
+first load is instant. One always-on free service uses ~744 of the 750 free
+monthly hours. GitHub pauses scheduled workflows after 60 days with no repo
+activity (any push wakes it). Delete the file to turn it off. `render.yaml`
+also sets `--timeout 120` because the free CPU is slow.
