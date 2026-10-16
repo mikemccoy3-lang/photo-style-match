@@ -3,141 +3,806 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Photo Style Match</title>
+  <title>Style Match</title>
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
-  <meta name="theme-color" content="#1c1c1e">
+  <meta name="theme-color" content="#0c0d0f">
+  <meta name="color-scheme" content="dark">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Style Match">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <style>
-    :root { color-scheme: light dark; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      max-width: 480px;
-      margin: 0 auto;
-      padding: calc(env(safe-area-inset-top, 0px) + 2rem) 1.25rem 2.5rem;
-      text-align: center;
+    :root {
+      --bg: #0c0d0f;
+      --panel: #15171a;
+      --panel2: #1d2024;
+      --line: #2e3238;
+      --text: #ffffff;
+      --muted: #c9cdd4;
+      --amber: #ffc45e;
+      --ink: #1b1300;
+      --teal: #3cc0da;
+      --r: 18px;
+      --display: "Avenir Next Condensed", "Roboto Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
+      --body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    #save { width: 100%; margin-top: 1rem; }
-    h1 { font-size: 1.4rem; margin-bottom: 0.25rem; }
-    p.sub { opacity: 0.7; margin-top: 0; margin-bottom: 2rem; }
-    input[type="file"] {
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+    html { color-scheme: dark; background: var(--bg); }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--text);
+      font: 16px/1.45 var(--body);
+      background:
+        radial-gradient(900px 520px at 8% -8%, rgba(60, 192, 218, 0.17), transparent 60%),
+        radial-gradient(800px 520px at 100% 108%, rgba(255, 196, 94, 0.13), transparent 60%),
+        var(--bg);
+      -webkit-tap-highlight-color: transparent;
+    }
+    /* film grain */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.08;
+      mix-blend-mode: overlay;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    }
+    .app {
+      position: relative;
+      max-width: 560px;
+      margin: 0 auto;
+      padding: calc(env(safe-area-inset-top, 0px) + 18px) 16px calc(env(safe-area-inset-bottom, 0px) + 32px);
+    }
+
+    /* ---------- brand ---------- */
+    .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .logo { width: 46px; height: 46px; flex: none; border-radius: 12px; animation: spin-in 0.9s cubic-bezier(.2,.8,.2,1); }
+    h1 {
+      margin: 0;
+      font: 800 31px/1 var(--display);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    h1 span { color: var(--amber); }
+    .tagline { margin: 4px 0 0; color: var(--muted); font-size: 14.5px; }
+
+    /* ---------- drop zone ---------- */
+    .drop {
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+      padding: 40px 20px 34px;
+      text-align: center;
+      border: 2px dashed #555b65;
+      border-radius: var(--r);
+      background: rgba(255, 255, 255, 0.035);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s, transform 0.15s;
+    }
+    .drop:hover, .drop.over { border-color: var(--amber); background: rgba(255, 196, 94, 0.08); }
+    .drop:active { transform: scale(0.99); }
+    .drop svg { width: 68px; height: 68px; margin-bottom: 6px; }
+    .drop .big { font: 800 27px/1.05 var(--display); letter-spacing: 0.06em; text-transform: uppercase; }
+    .drop .small { color: var(--muted); font-size: 14.5px; }
+    .drop-msg { min-height: 1.4em; margin: 10px 0 0; text-align: center; color: var(--text); font-size: 15px; }
+    .looks-title { margin: 26px 0 10px; text-align: center; color: var(--muted); font: 700 13px var(--display); letter-spacing: 0.14em; text-transform: uppercase; }
+    .looks-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+    .looks-list span {
+      padding: 6px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      font-size: 13.5px;
+    }
+
+    /* ---------- viewfinder ---------- */
+    .vf {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: var(--r);
+      border: 1px solid var(--line);
+      background: #000;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.55);
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      touch-action: pan-y;
+    }
+    .vf canvas, .vf img.final {
       display: block;
       width: 100%;
-      margin: 1.5rem 0;
-      padding: 0.9rem;
-      border: 1px dashed #888;
-      border-radius: 8px;
-      box-sizing: border-box;
-      font-size: 0.95rem;
+      height: auto;
+      max-height: 58vh;
+      object-fit: contain;
     }
-    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
-    .buttons button { min-height: 3.4rem; }
-    button {
-      font-size: 1.05rem;
-      padding: 0.9rem 0.5rem;
-      border: none;
-      border-radius: 10px;
-      background: #1c1c1e;
-      color: white;
+    .br { position: absolute; width: 24px; height: 24px; border: 3px solid var(--amber); pointer-events: none; }
+    .br.tl { left: 10px; top: 10px; border-right: 0; border-bottom: 0; border-top-left-radius: 8px; }
+    .br.tr { right: 10px; top: 10px; border-left: 0; border-bottom: 0; border-top-right-radius: 8px; }
+    .br.bl { left: 10px; bottom: 10px; border-right: 0; border-top: 0; border-bottom-left-radius: 8px; }
+    .br.brr { right: 10px; bottom: 10px; border-left: 0; border-top: 0; border-bottom-right-radius: 8px; }
+    .pill-ov {
+      position: absolute;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.66);
+      -webkit-backdrop-filter: blur(6px);
+      backdrop-filter: blur(6px);
+      font: 800 13px var(--display);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+    .badge { left: 16px; top: 16px; max-width: calc(100% - 32px); }
+    .hint { right: 38px; bottom: 16px; font-weight: 700; letter-spacing: 0.08em; }
+    .vf.compare .hint { opacity: 0; }
+    .vf.compare .badge { background: var(--amber); color: var(--ink); }
+    canvas.pop { animation: pop 0.24s ease-out; }
+
+    .flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+    .flash.go { animation: flash 0.32s ease-out; }
+    .busy-layer {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-content: center;
+      justify-items: center;
+      gap: 14px;
+      text-align: center;
+      background: rgba(0, 0, 0, 0.62);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+    }
+    .vf.busy .busy-layer { display: grid; }
+    .ring {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: conic-gradient(from 0deg, transparent 0 25%, var(--amber));
+      -webkit-mask: radial-gradient(circle, transparent 19px, #000 20px);
+      mask: radial-gradient(circle, transparent 19px, #000 20px);
+      animation: rot 0.9s linear infinite;
+    }
+    .busy-text { font: 800 19px var(--display); letter-spacing: 0.08em; text-transform: uppercase; padding: 0 16px; }
+
+    /* ---------- controls ---------- */
+    .row-title { display: flex; align-items: baseline; justify-content: space-between; margin: 20px 2px 8px; }
+    .row-title b { font: 800 15px var(--display); letter-spacing: 0.12em; text-transform: uppercase; }
+    .row-title output { font: 800 16px var(--display); letter-spacing: 0.04em; color: var(--amber); }
+    input[type="range"] {
+      --p: 85%;
+      width: 100%;
+      height: 34px;
+      margin: 0;
+      background: transparent;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      border-radius: 99px;
+      background: linear-gradient(to right, var(--amber) var(--p), #3b4048 var(--p));
+    }
+    input[type="range"]::-moz-range-track { height: 8px; border-radius: 99px; background: #3b4048; }
+    input[type="range"]::-moz-range-progress { height: 8px; border-radius: 99px; background: var(--amber); }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 28px;
+      height: 28px;
+      margin-top: -10px;
+      border-radius: 50%;
+      border: 4px solid var(--amber);
+      background: #fff;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 4px solid var(--amber);
+      background: #fff;
+    }
+    input[type="range"]:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 8px; }
+
+    .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 34px; margin: 14px 2px 0; }
+    .tags .t {
+      padding: 5px 11px;
+      border: 1.5px solid var(--text);
+      border-radius: 999px;
+      font: 800 12.5px var(--display);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .tags .cap { color: var(--muted); font-size: 13px; }
+
+    .strip {
+      position: relative;
+      display: flex;
+      gap: 12px;
+      margin: 10px -16px 0;
+      padding: 10px 16px 14px;
+      overflow-x: auto;
+      scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .strip::-webkit-scrollbar { display: none; }
+    .chip {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 96px;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--text);
+      text-align: center;
+      cursor: pointer;
+      scroll-snap-align: center;
+    }
+    .thumb {
+      position: relative;
+      display: block;
+      flex: none;
+      width: 96px;
+      height: 96px;
+      overflow: hidden;
+      border-radius: 14px;
+      background: var(--panel2);
+      outline: 3px solid transparent;
+      outline-offset: 2px;
+      transition: transform 0.16s, outline-color 0.16s;
+    }
+    .thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .chip.on .thumb { outline-color: var(--amber); transform: translateY(-4px) scale(1.04); }
+    .chip:active .thumb { transform: scale(0.96); }
+    .chip:focus-visible .thumb { outline-color: #fff; }
+    .check {
+      position: absolute;
+      right: 5px;
+      top: 5px;
+      display: none;
+      place-items: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--amber);
+      color: var(--ink);
+      font: 900 14px/1 var(--body);
+    }
+    .chip.on .check { display: grid; }
+    .thumb.loading img { filter: grayscale(0.5) brightness(0.55); }
+    .thumb.loading::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(110deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+      background-size: 220% 100%;
+      animation: shimmer 1.15s linear infinite;
+    }
+    .thumb .errmsg {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-content: center;
+      gap: 2px;
+      background: rgba(0, 0, 0, 0.78);
+      font: 800 12px var(--display);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .thumb.err .errmsg { display: grid; }
+    .cname {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+      min-height: 2.4em;
+      margin-top: 9px;
+      font: 800 12.5px/1.15 var(--display);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .actions { display: grid; gap: 10px; margin-top: 4px; }
+    .cta {
+      width: 100%;
+      padding: 17px 18px;
+      border: 0;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #ffc45e, #ffe08f);
+      color: var(--ink);
+      font: 800 21px var(--display);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      box-shadow: 0 10px 30px rgba(255, 196, 94, 0.28);
+      cursor: pointer;
+      transition: transform 0.12s;
+    }
+    .cta:active { transform: scale(0.98); }
+    .cta:disabled { background: #2b2f35; color: #b5bac2; box-shadow: none; cursor: default; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .ghost {
+      display: grid;
+      place-items: center;
+      padding: 13px 14px;
+      border: 2px solid #4b515a;
+      border-radius: 14px;
+      background: transparent;
+      color: #fff;
+      font: 800 15px var(--display);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       cursor: pointer;
     }
-    button:active { opacity: 0.8; }
-    button:disabled { opacity: 0.5; }
-    #status { margin-top: 1.25rem; opacity: 0.75; min-height: 1.2em; font-size: 0.95rem; }
-    #preview {
-      margin-top: 1.5rem;
-      max-width: 100%;
-      border-radius: 10px;
-      display: none;
+    .ghost:active { background: rgba(255, 255, 255, 0.08); }
+    .status { min-height: 1.5em; margin: 12px 0 0; text-align: center; color: var(--muted); font-size: 14.5px; }
+    .foot { margin-top: 26px; text-align: center; color: var(--muted); font-size: 13px; }
+    .result-title { margin: 18px 0 4px; text-align: center; font: 800 24px var(--display); letter-spacing: 0.08em; text-transform: uppercase; }
+    .result-sub { margin: 0 0 16px; text-align: center; color: var(--muted); font-size: 14.5px; }
+
+    button:focus-visible, label:focus-visible { outline: 3px solid #fff; outline-offset: 3px; }
+    .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+    @keyframes pop { from { transform: scale(0.985); opacity: 0.82; } to { transform: scale(1); opacity: 1; } }
+    @keyframes flash { 0% { opacity: 0; } 14% { opacity: 0.9; } 100% { opacity: 0; } }
+    @keyframes rot { to { transform: rotate(360deg); } }
+    @keyframes shimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+    @keyframes spin-in { from { transform: rotate(-200deg) scale(0.4); opacity: 0; } to { transform: none; opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001s !important; transition-duration: 0.001s !important; }
     }
   </style>
 </head>
 <body>
-  <h1>Photo Style Match</h1>
-  <p class="sub">Upload a photo, pick a look, get the graded version.</p>
+<main class="app">
 
-  <form id="grade-form">
-    <input type="file" name="photo" id="photo" accept="image/*" required>
-    <div class="buttons">
-      {% for key, label in styles.items() %}
-      <button type="submit" name="style" value="{{ key }}">{{ label }}</button>
-      {% endfor %}
+  <header class="brand">
+    <svg class="logo" viewBox="0 0 64 64" aria-hidden="true">
+      <defs><clipPath id="cc"><circle cx="32" cy="32" r="17"/></clipPath></defs>
+      <rect width="64" height="64" rx="14" fill="#1c1c1e"/>
+      <g clip-path="url(#cc)"><rect width="64" height="64" fill="#16788c"/><polygon points="0,64 64,0 0,0" fill="#ffc45e"/></g>
+      <circle cx="32" cy="32" r="21" fill="none" stroke="#f5f5f7" stroke-width="2.4"/>
+    </svg>
+    <div>
+      <h1>Style<span>Match</span></h1>
+      <p class="tagline">Pick a shot. Borrow a look.</p>
     </div>
-  </form>
-  <div id="status"></div>
-  <img id="preview" alt="Graded result">
-  <button id="save" type="button" hidden>Save photo</button>
+  </header>
 
-  <script>
-    const form = document.getElementById('grade-form');
-    const status = document.getElementById('status');
-    const preview = document.getElementById('preview');
-    const buttons = form.querySelectorAll('button');
-    const saveBtn = document.getElementById('save');
-    let resultUrl = null;
-    let resultFile = null;
+  <input class="sr" type="file" id="file" accept="image/*">
 
-    // On phones this opens the share sheet ("Save Image" / "Save to Photos"),
-    // which is the reliable way to save from an installed home-screen app.
-    // Desktop browsers fall back to a normal file download.
-    saveBtn.addEventListener('click', async () => {
-      if (!resultFile) return;
-      if (navigator.canShare && navigator.canShare({ files: [resultFile] })) {
-        try {
-          await navigator.share({ files: [resultFile] });
-        } catch (err) {
-          if (err.name !== 'AbortError') status.textContent = 'Could not open share sheet: ' + err.message;
-        }
-        return;
-      }
-      const a = document.createElement('a');
-      a.href = resultUrl;
-      a.download = resultFile.name;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
+  <!-- 1. choose a photo -->
+  <section id="home">
+    <label class="drop" id="drop" for="file">
+      <svg viewBox="0 0 64 64" fill="none" stroke="#ffc45e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 22a5 5 0 0 1 5-5h6l4-6h18l4 6h6a5 5 0 0 1 5 5v26a5 5 0 0 1-5 5H13a5 5 0 0 1-5-5z"/>
+        <circle cx="32" cy="35" r="11"/><circle cx="32" cy="35" r="4.5"/>
+      </svg>
+      <span class="big">Choose a photo</span>
+      <span class="small">or drop one here</span>
+    </label>
+    <p class="drop-msg" id="dropMsg" aria-live="polite"></p>
+    <p class="looks-title">{{ styles|length }} looks inside</p>
+    <div class="looks-list">
+      {% for s in styles %}<span>{{ s.name }}</span>{% endfor %}
+    </div>
+  </section>
+
+  <!-- 2. browse looks -->
+  <section id="studio" hidden>
+    <div class="vf" id="vf" aria-label="Your photo with the selected look. Press and hold to see the original.">
+      <canvas id="stage" role="img" aria-label="Preview"></canvas>
+      <i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i>
+      <div class="pill-ov badge" id="badge">Original</div>
+      <div class="pill-ov hint">Hold to compare</div>
+      <div class="flash" id="flash"></div>
+      <div class="busy-layer"><div class="ring"></div><div class="busy-text" id="busyText">Developing…</div></div>
+    </div>
+
+    <div class="row-title"><b>Intensity</b><output id="strengthOut" for="strength">{{ default_strength }}%</output></div>
+    <input type="range" id="strength" min="0" max="100" value="{{ default_strength }}" aria-label="Intensity">
+
+    <div class="tags" id="tags" aria-live="polite"></div>
+
+    <div class="strip" id="strip" role="listbox" aria-label="Photographer looks"></div>
+
+    <div class="actions">
+      <button class="cta" id="develop" type="button">Develop full-size</button>
+      <label class="ghost" for="file" id="change">Change photo</label>
+    </div>
+    <p class="status" id="status" aria-live="polite"></p>
+    <p class="foot">Previews are low-res. Intensity changes are instant.</p>
+  </section>
+
+  <!-- 3. result -->
+  <section id="result" hidden>
+    <div class="vf"><img class="final" id="final" alt="Your developed photo"><i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br brr"></i></div>
+    <h2 class="result-title" id="resultTitle">Developed</h2>
+    <p class="result-sub" id="resultSub"></p>
+    <div class="actions">
+      <button class="cta" id="save" type="button">Save photo</button>
+      <div class="two">
+        <button class="ghost" id="back" type="button">Back to looks</button>
+        <label class="ghost" for="file">New photo</label>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  const STYLES = {{ styles|tojson }};
+  const DEFAULT_STRENGTH = {{ default_strength }};
+  const PREVIEW_PX = 512;
+  const FULL_PX = 1200;
+  const ORIGINAL = "__original";
+  const MESSAGES = [
+    "Dodging and burning…",
+    "Lifting the shadows…",
+    "Warming up the highlights…",
+    "Dusting off the sensor…",
+    "Developing in the darkroom…",
+    "Straightening the horizon…",
+  ];
+
+  const $ = (s) => document.querySelector(s);
+  const el = {
+    file: $("#file"), home: $("#home"), drop: $("#drop"), dropMsg: $("#dropMsg"),
+    studio: $("#studio"), result: $("#result"),
+    vf: $("#vf"), stage: $("#stage"), badge: $("#badge"), flash: $("#flash"), busyText: $("#busyText"),
+    strength: $("#strength"), strengthOut: $("#strengthOut"), tags: $("#tags"), strip: $("#strip"),
+    develop: $("#develop"), status: $("#status"),
+    final: $("#final"), save: $("#save"), back: $("#back"), resultTitle: $("#resultTitle"), resultSub: $("#resultSub"),
+  };
+
+  const state = {
+    gen: 0, srcImg: null, srcUrl: null, original: null, smallBlob: null, smallUrl: null,
+    graded: {}, selected: STYLES[0].slug, strength: DEFAULT_STRENGTH / 100,
+    comparing: false, queue: [], running: false, paused: false, ctrl: null,
+    developing: false, resultUrl: null, resultFile: null, coldShown: false,
+  };
+  const chipEls = {};
+  const nameOf = (slug) => (STYLES.find((s) => s.slug === slug) || { name: "Original" }).name;
+
+  /* ---------- helpers ---------- */
+  function loadImage(url) {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("decode failed"));
+      img.src = url;
     });
+  }
+  function scaleToCanvas(img, maxDim) {
+    const w = img.naturalWidth, h = img.naturalHeight;
+    const k = Math.min(1, maxDim / Math.max(w, h));
+    const c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(w * k));
+    c.height = Math.max(1, Math.round(h * k));
+    const ctx = c.getContext("2d");
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    return c;
+  }
+  const toBlob = (canvas, q) => new Promise((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("Could not encode image"))), "image/jpeg", q));
+  function setStatus(msg) { el.status.textContent = msg || ""; }
+  function showView(name) {
+    el.home.hidden = name !== "home";
+    el.studio.hidden = name !== "studio";
+    el.result.hidden = name !== "result";
+    window.scrollTo({ top: 0 });
+  }
+  const buzz = () => { try { navigator.vibrate && navigator.vibrate(8); } catch (_) {} };
 
-    form.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const submitter = event.submitter;
-      const photo = document.getElementById('photo').files[0];
-      if (!photo) return;
+  /* ---------- drawing ---------- */
+  function draw() {
+    const o = state.original;
+    if (!o) return;
+    const c = el.stage;
+    if (c.width !== o.width || c.height !== o.height) { c.width = o.width; c.height = o.height; }
+    const ctx = c.getContext("2d");
+    ctx.globalAlpha = 1;
+    ctx.drawImage(o, 0, 0);
 
-      buttons.forEach((b) => (b.disabled = true));
-      status.textContent = 'Grading…';
-      preview.style.display = 'none';
-      saveBtn.hidden = true;
+    const sel = state.selected;
+    const g = state.graded[sel];
+    const ready = g && g.img;
+    if (sel !== ORIGINAL && !state.comparing && ready) {
+      ctx.globalAlpha = state.strength;
+      ctx.drawImage(g.img, 0, 0, c.width, c.height);
+      ctx.globalAlpha = 1;
+    }
 
-      const data = new FormData();
-      data.append('photo', photo);
-      data.append('style', submitter.value);
+    let text;
+    if (sel === ORIGINAL || state.comparing) text = "Original";
+    else if (ready) text = nameOf(sel);
+    else if (g === "error") text = nameOf(sel) + " · tap to retry";
+    else text = nameOf(sel) + " · rendering…";
+    el.badge.textContent = text;
+    el.vf.classList.toggle("compare", state.comparing);
+  }
 
+  function renderTags() {
+    el.tags.innerHTML = "";
+    if (state.selected === ORIGINAL) {
+      const cap = document.createElement("span");
+      cap.className = "cap";
+      cap.textContent = "As shot. Tap a look to try it on.";
+      el.tags.appendChild(cap);
+      return;
+    }
+    const style = STYLES.find((s) => s.slug === state.selected);
+    style.tags.forEach((t) => {
+      const s = document.createElement("span");
+      s.className = "t";
+      s.textContent = t;
+      el.tags.appendChild(s);
+    });
+    const cap = document.createElement("span");
+    cap.className = "cap";
+    cap.textContent = "measured from their photos";
+    el.tags.appendChild(cap);
+  }
+
+  function updateCta() {
+    const original = state.selected === ORIGINAL;
+    el.develop.disabled = original || state.developing;
+    el.develop.textContent = original ? "Pick a look first" : "Develop full-size";
+  }
+
+  /* ---------- filmstrip ---------- */
+  function buildStrip() {
+    el.strip.innerHTML = "";
+    Object.keys(chipEls).forEach((k) => delete chipEls[k]);
+    const items = [{ slug: ORIGINAL, name: "Original" }, ...STYLES];
+    items.forEach((s) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.setAttribute("role", "option");
+      b.setAttribute("aria-selected", "false");
+      b.dataset.slug = s.slug;
+      b.innerHTML =
+        '<span class="thumb"><img alt=""><i class="check">✓</i><span class="errmsg"><span>Couldn’t load</span><span>Tap to retry</span></span></span>' +
+        '<span class="cname"></span>';
+      b.querySelector("img").src = state.smallUrl;
+      b.querySelector(".cname").textContent = s.name;
+      b.addEventListener("click", () => { buzz(); select(s.slug); });
+      chipEls[s.slug] = b;
+      el.strip.appendChild(b);
+      if (s.slug !== ORIGINAL) setChip(s.slug, "loading");
+    });
+  }
+  function setChip(slug, mode) {
+    const b = chipEls[slug];
+    if (!b) return;
+    const thumb = b.querySelector(".thumb");
+    thumb.classList.toggle("loading", mode === "loading");
+    thumb.classList.toggle("err", mode === "error");
+    if (mode === "ready") b.querySelector("img").src = state.graded[slug].url;
+  }
+
+  function select(slug) {
+    if (state.developing) return;
+    state.selected = slug;
+    for (const [s, b] of Object.entries(chipEls)) {
+      const on = s === slug;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-selected", String(on));
+    }
+    if (slug !== ORIGINAL) {
+      const g = state.graded[slug];
+      if (g === "error") { state.graded[slug] = undefined; setChip(slug, "loading"); prioritize(slug); }
+      else if (!g) prioritize(slug);
+    }
+    renderTags();
+    draw();
+    updateCta();
+    el.stage.classList.remove("pop");
+    void el.stage.offsetWidth;
+    el.stage.classList.add("pop");
+    const b = chipEls[slug];
+    el.strip.scrollTo({ left: b.offsetLeft - (el.strip.clientWidth - b.offsetWidth) / 2, behavior: "smooth" });
+  }
+
+  /* ---------- preview queue ---------- */
+  function prioritize(slug) {
+    state.queue = state.queue.filter((s) => s !== slug);
+    state.queue.unshift(slug);
+    if (!state.paused) runQueue();
+  }
+
+  async function fetchPreview(slug, signal) {
+    const fd = new FormData();
+    fd.append("photo", state.smallBlob, "preview.jpg");
+    fd.append("style", slug);
+    const res = await fetch("/preview", { method: "POST", body: fd, signal });
+    if (!res.ok) throw new Error("preview failed");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const img = await loadImage(url);
+    return { img, url };
+  }
+
+  async function runQueue() {
+    if (state.running) return;
+    state.running = true;
+    const gen = state.gen;
+    while (state.queue.length && !state.paused && gen === state.gen) {
+      const slug = state.queue.shift();
+      const have = state.graded[slug];
+      if (have && have.img) continue;
+      setChip(slug, "loading");
+      state.ctrl = new AbortController();
+      const anyReady = Object.values(state.graded).some((g) => g && g.img);
+      const coldTimer = anyReady ? null : setTimeout(() => {
+        state.coldShown = true;
+        setStatus("Waking the darkroom… the free server naps when idle, so the first look can take 30–50 seconds.");
+      }, 6000);
       try {
-        const res = await fetch('/grade', { method: 'POST', body: data });
-        if (!res.ok) {
-          const text = await res.text();
-          throw new Error(text || 'Something went wrong.');
-        }
-        const blob = await res.blob();
-        if (resultUrl) URL.revokeObjectURL(resultUrl);
-        resultUrl = URL.createObjectURL(blob);
-        resultFile = new File([blob], `${submitter.value}_graded.jpg`, { type: 'image/jpeg' });
-
-        preview.src = resultUrl;
-        preview.style.display = 'block';
-        saveBtn.hidden = false;
-
-        status.textContent = 'Done — tap Save photo.';
+        const r = await fetchPreview(slug, state.ctrl.signal);
+        if (gen !== state.gen) { URL.revokeObjectURL(r.url); break; }
+        state.graded[slug] = r;
+        setChip(slug, "ready");
+        if (state.coldShown) { setStatus(""); state.coldShown = false; }
+        if (slug === state.selected) draw();
       } catch (err) {
-        status.textContent = 'Error: ' + err.message;
+        if (gen !== state.gen) break;
+        if (err.name === "AbortError") { state.queue.unshift(slug); break; }
+        state.graded[slug] = "error";
+        setChip(slug, "error");
+        if (slug === state.selected) draw();
       } finally {
-        buttons.forEach((b) => (b.disabled = false));
+        if (coldTimer) clearTimeout(coldTimer);
       }
+    }
+    if (gen === state.gen) state.running = false;
+    if (gen === state.gen && !state.paused && state.queue.length) runQueue();
+  }
+
+  function resetSession() {
+    state.gen += 1;
+    if (state.ctrl) state.ctrl.abort();
+    Object.values(state.graded).forEach((g) => g && g.url && URL.revokeObjectURL(g.url));
+    [state.srcUrl, state.smallUrl, state.resultUrl].forEach((u) => u && URL.revokeObjectURL(u));
+    Object.assign(state, {
+      srcImg: null, srcUrl: null, original: null, smallBlob: null, smallUrl: null, graded: {},
+      queue: [], running: false, paused: false, developing: false, resultUrl: null, resultFile: null,
+      comparing: false, coldShown: false,
     });
-  </script>
+    el.vf.classList.remove("busy");
+    setStatus("");
+  }
+
+  /* ---------- loading a photo ---------- */
+  async function onFile(file) {
+    if (!file) return;
+    el.dropMsg.textContent = "";
+    const url = URL.createObjectURL(file);
+    let img;
+    try {
+      img = await loadImage(url);
+    } catch (_) {
+      URL.revokeObjectURL(url);
+      showView("home");
+      el.dropMsg.textContent = "That file didn’t open. Try a JPG or PNG from your photos.";
+      return;
+    }
+    resetSession();
+    state.srcImg = img;
+    state.srcUrl = url;
+    state.original = scaleToCanvas(img, PREVIEW_PX);
+    state.smallBlob = await toBlob(state.original, 0.85);
+    state.smallUrl = URL.createObjectURL(state.smallBlob);
+
+    buildStrip();
+    state.selected = STYLES[0].slug;
+    state.queue = STYLES.map((s) => s.slug);
+    showView("studio");
+    select(state.selected);
+    runQueue();
+  }
+
+  /* ---------- develop full size ---------- */
+  let msgTimer = null;
+  function startMessages() {
+    let i = 0;
+    el.busyText.textContent = MESSAGES[0];
+    msgTimer = setInterval(() => { i = (i + 1) % MESSAGES.length; el.busyText.textContent = MESSAGES[i]; }, 1700);
+  }
+  function stopMessages() { clearInterval(msgTimer); msgTimer = null; }
+
+  async function develop() {
+    if (state.selected === ORIGINAL || state.developing) return;
+    state.developing = true;
+    state.paused = true;
+    if (state.ctrl) state.ctrl.abort();
+    el.vf.classList.add("busy");
+    el.flash.classList.remove("go"); void el.flash.offsetWidth; el.flash.classList.add("go");
+    el.develop.disabled = true;
+    setStatus("");
+    startMessages();
+    const slug = state.selected;
+    try {
+      const blob = await toBlob(scaleToCanvas(state.srcImg, FULL_PX), 0.92);
+      const fd = new FormData();
+      fd.append("photo", blob, "photo.jpg");
+      fd.append("style", slug);
+      fd.append("strength", state.strength.toFixed(2));
+      const res = await fetch("/grade", { method: "POST", body: fd });
+      if (!res.ok) throw new Error("The server hit a snag. Try again in a moment.");
+      const out = await res.blob();
+      if (state.resultUrl) URL.revokeObjectURL(state.resultUrl);
+      state.resultUrl = URL.createObjectURL(out);
+      state.resultFile = new File([out], slug + "_graded.jpg", { type: "image/jpeg" });
+      el.final.src = state.resultUrl;
+      el.resultTitle.textContent = nameOf(slug);
+      el.resultSub.textContent = "Developed at " + Math.round(state.strength * 100) + "% intensity";
+      showView("result");
+    } catch (err) {
+      setStatus("Couldn’t develop that one: " + err.message);
+    } finally {
+      stopMessages();
+      el.vf.classList.remove("busy");
+      state.developing = false;
+      updateCta();
+      if (!el.studio.hidden) { state.paused = false; runQueue(); }
+    }
+  }
+
+  async function savePhoto() {
+    if (!state.resultFile) return;
+    if (navigator.canShare && navigator.canShare({ files: [state.resultFile] })) {
+      try { await navigator.share({ files: [state.resultFile] }); }
+      catch (err) { if (err.name !== "AbortError") setStatus("Couldn’t open the share sheet: " + err.message); }
+      return;
+    }
+    const a = document.createElement("a");
+    a.href = state.resultUrl;
+    a.download = state.resultFile.name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  /* ---------- wiring ---------- */
+  el.file.addEventListener("click", () => { el.file.value = ""; });
+  el.file.addEventListener("change", (e) => onFile(e.target.files[0]));
+  el.develop.addEventListener("click", develop);
+  el.save.addEventListener("click", savePhoto);
+  el.back.addEventListener("click", () => { showView("studio"); state.paused = false; runQueue(); });
+
+  el.strength.addEventListener("input", () => {
+    const v = Number(el.strength.value);
+    state.strength = v / 100;
+    el.strengthOut.textContent = v + "%";
+    el.strength.style.setProperty("--p", v + "%");
+    draw();
+  });
+  el.strength.style.setProperty("--p", DEFAULT_STRENGTH + "%");
+
+  // press and hold the photo to see the original
+  el.vf.addEventListener("pointerdown", () => { if (!state.developing) { state.comparing = true; draw(); } });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((t) =>
+    el.vf.addEventListener(t, () => { if (state.comparing) { state.comparing = false; draw(); } }));
+  el.vf.addEventListener("contextmenu", (e) => e.preventDefault());
+
+  // drag and drop (desktop)
+  ["dragenter", "dragover"].forEach((t) => window.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((t) => window.addEventListener(t, (e) => { e.preventDefault(); el.drop.classList.remove("over"); }));
+  window.addEventListener("drop", (e) => {
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) onFile(f);
+  });
+</script>
 </body>
 </html>

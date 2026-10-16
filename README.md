@@ -97,12 +97,31 @@ correction feels too aggressive on a given photo.
 
 ## Web app (`web_app/`)
 
-A small Flask front end so you can grade a photo from your phone without
-touching the CLI: upload an image, tap a style button, get the graded JPEG
-back as a download. It reuses the same `style_match` engine and reads
-whichever `profiles/<name>/profile.json` files exist -- add a new
-photographer via the CLI workflow above and it shows up as a button
-automatically once you add it to the `STYLES` dict in `web_app/app.py`.
+A Flask front end so you can grade a photo from your phone without touching
+the CLI. The flow:
+
+1. **Choose a photo.** The browser shrinks it to 512px and shows it in a
+   viewfinder.
+2. **Browse looks.** The small copy is sent to `POST /preview` once per
+   photographer (one at a time, selected look first). Each returns a
+   full-strength graded preview, shown as a filmstrip of *your own photo*
+   in every style. Tap a thumbnail to put that look in the viewfinder.
+   Press and hold the photo to see the original.
+3. **Intensity slider.** Blends the preview with the original on a canvas
+   in the browser, so it's instant and costs no server calls. The same
+   value is sent as `strength` when you develop.
+4. **Develop full-size.** Sends a 1200px copy to `POST /grade` with the
+   chosen style and strength, then shows the result with a Save button
+   (share sheet on phones, download on desktop).
+
+Each look also shows plain-English traits (Dark, Punchy, Matte, Cool...)
+computed from the profile's own statistics by `describe_look()` in
+`web_app/app.py`, so the labels stay tied to what was actually measured.
+
+It reuses the same `style_match` engine and reads whichever
+`profiles/<name>/profile.json` files exist -- add a new photographer via
+the CLI workflow above and it shows up automatically once you add it to the
+`STYLES` dict in `web_app/app.py`.
 
 Everything runs in memory (no disk writes), so it's safe to deploy on a
 host with an ephemeral filesystem like Render's free tier.
