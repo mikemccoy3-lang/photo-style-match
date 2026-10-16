@@ -73,7 +73,11 @@ class SlidersBehave(unittest.TestCase):
         o = np.asarray(photo).astype(float)
         blended = (1 - s) * o + s * ((1 - c) * np.asarray(tone) + c * np.asarray(full))
         final = np.asarray(transform.develop(photo, [(prof, 1.0)], s, c)).astype(float)
-        self.assertLess(np.abs(blended - final).max(), 3.0)
+        # previews use a coarser 33^3 lattice than the final 65^3 one, so allow
+        # a little interpolation difference, but the average must stay tiny
+        err = np.abs(blended - final)
+        self.assertLess(err.mean(), 1.0)
+        self.assertLess(err.max(), 6.0)
 
     def test_color_zero_keeps_original_chroma_better_than_color_one(self):
         from skimage import color as skcolor

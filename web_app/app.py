@@ -124,8 +124,9 @@ STYLE_CARDS = [
     for slug, name in STYLES.items()
 ]
 
-# Build the lookup lattice once at startup instead of on the first request.
+# Build the lookup lattices once at startup instead of on the first request.
 transform._grid(transform.LUT_SIZE)
+transform._grid(transform.PREVIEW_LUT_SIZE)
 
 
 # ---------- request helpers ----------

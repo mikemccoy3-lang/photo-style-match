@@ -28,7 +28,8 @@ from skimage import color
 
 from .profile import LookProfile, N_HIST_BINS
 
-LUT_SIZE = 65
+LUT_SIZE = 65          # final renders
+PREVIEW_LUT_SIZE = 33  # thumbnails: ~8x less work, ~0.5/255 average difference
 STATS_DIMENSION = 512
 
 _BIN_EDGES = np.linspace(0, 100, N_HIST_BINS + 1)
@@ -138,8 +139,10 @@ def preview_pair(image: Image.Image, profile: LookProfile) -> tuple[Image.Image,
     """Full-strength (tone only, tone + color) renders of a small photo.
 
     The browser blends these with the original for its intensity and color
-    sliders, so one request per look covers every slider position.
+    sliders, so one request per look covers every slider position. Uses the
+    coarser preview lattice: a 512px thumbnail doesn't need 65^3 precision
+    and the free server's CPU is small.
     """
     stats = source_stats(image)
-    tone_nodes, full_nodes = _look_nodes(stats, profile, LUT_SIZE)
-    return apply_table(image, tone_nodes), apply_table(image, full_nodes)
+    tone_nodes, full_nodes = _look_nodes(stats, profile, PREVIEW_LUT_SIZE)
+    return apply_table(image, tone_nodes, PREVIEW_LUT_SIZE), apply_table(image, full_nodes, PREVIEW_LUT_SIZE)
