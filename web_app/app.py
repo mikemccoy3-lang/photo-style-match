@@ -24,6 +24,7 @@ PROFILES_DIR = os.path.join(BASE_DIR, "..", "profiles")
 STYLES = {
     "larry-chen": "Larry Chen",
     "peter-mckinnon": "Peter McKinnon",
+    "krispy-media": "Krispy Media",
 }
 
 GRADE_STRENGTH = 0.85
