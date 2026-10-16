@@ -132,6 +132,14 @@ Free-tier services spin down after 15 minutes idle and take ~30-50s to
 wake on the next request -- fine for occasional use, just not instant on a
 cold start.
 
+**Install on your phone:** the site ships a web manifest and app icons
+(`web_app/static/`), so "Add to Home Screen" gives a standalone app icon with
+no browser bar. iPhone: Safari → Share → Add to Home Screen. Android: Chrome
+→ ⋮ → Add to Home screen / Install app. Results use a **Save photo** button
+(share sheet on phones, plain download on desktop) because file downloads
+are unreliable inside an installed iOS home-screen app. Icons are generated
+by a one-off Pillow script; regenerate them if you want a new look.
+
 **Memory note:** Render's free instance has 512MB RAM total. scikit-image's
 LAB color conversion allocates several full-resolution float64 arrays at
 once, which on top of the Flask/gunicorn/numpy/scikit-image baseline

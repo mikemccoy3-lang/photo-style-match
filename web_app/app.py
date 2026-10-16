@@ -5,6 +5,7 @@ Runs entirely in memory -- nothing is written to disk, so it's safe on
 Render's ephemeral filesystem.
 """
 import io
+import json
 import os
 import sys
 
@@ -49,6 +50,26 @@ def load_profile(style_key: str) -> LookProfile:
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html", styles=STYLES)
+
+
+@app.route("/manifest.webmanifest", methods=["GET"])
+def manifest():
+    """Makes the site installable to a phone home screen as a standalone app."""
+    data = {
+        "name": "Photo Style Match",
+        "short_name": "Style Match",
+        "description": "Grade a photo to match a photographer's look.",
+        "start_url": "/",
+        "scope": "/",
+        "display": "standalone",
+        "background_color": "#1c1c1e",
+        "theme_color": "#1c1c1e",
+        "icons": [
+            {"src": "/static/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+            {"src": "/static/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"},
+        ],
+    }
+    return app.response_class(json.dumps(data), mimetype="application/manifest+json")
 
 
 @app.route("/grade", methods=["POST"])
