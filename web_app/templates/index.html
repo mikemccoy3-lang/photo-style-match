@@ -33,10 +33,11 @@
       box-sizing: border-box;
       font-size: 0.95rem;
     }
-    .buttons { display: flex; flex-direction: column; gap: 0.75rem; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .buttons button { min-height: 3.4rem; }
     button {
       font-size: 1.05rem;
-      padding: 0.9rem;
+      padding: 0.9rem 0.5rem;
       border: none;
       border-radius: 10px;
       background: #1c1c1e;

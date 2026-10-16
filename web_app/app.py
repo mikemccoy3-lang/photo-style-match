@@ -25,6 +25,11 @@ STYLES = {
     "larry-chen": "Larry Chen",
     "peter-mckinnon": "Peter McKinnon",
     "krispy-media": "Krispy Media",
+    "amy-shore": "Amy Shore",
+    "camden-thrasher": "Camden Thrasher",
+    "dino-dalle-carbonare": "Dino Dalle Carbonare",
+    "easton-chang": "Easton Chang",
+    "jamey-price": "Jamey Price",
 }
 
 GRADE_STRENGTH = 0.85
