@@ -132,6 +132,15 @@ Free-tier services spin down after 15 minutes idle and take ~30-50s to
 wake on the next request -- fine for occasional use, just not instant on a
 cold start.
 
+**Adding a photographer:** create `profiles/<slug>/references/`, drop in
+8-15 of their color photos (varied lighting; skip black-and-white frames,
+white-bordered or letterboxed frames, stitched carousel panels, and
+near-black abstracts -- they skew the color/tone statistics), run
+`build-profile`, add the slug and display name to the `STYLES` dict in
+`web_app/app.py`, and commit `profile.json`. Currently eight styles: Larry
+Chen, Peter McKinnon, Krispy Media, Amy Shore, Camden Thrasher, Dino Dalle
+Carbonare, Easton Chang, Jamey Price.
+
 **Install on your phone:** the site ships a web manifest and app icons
 (`web_app/static/`), so "Add to Home Screen" gives a standalone app icon with
 no browser bar. iPhone: Safari → Share → Add to Home Screen. Android: Chrome
